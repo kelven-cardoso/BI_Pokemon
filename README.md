@@ -9,6 +9,7 @@ Relatório Power BI (formato **PBIP**: PBIR + TMDL) que transforma dados públic
 - **Fundo dinâmico por tipo**: bolhas (Água), brasas (Fogo), raios (Elétrico), folhas, neve, almas, ondas psíquicas... tudo em CSS.
 - **Modos Normal / ✨ Shiny / 🃏 Cartas**, com galeria de cartas e prévia holográfica ao passar o mouse.
 - **Evolução clicável** com animação de evolução (silhuetas alternando, raios e clarão) e **formas clicáveis** (Mega X/Y, Gigantamax...).
+- **Arena** (página 2): batalhas 1x1 ou Time de 3 com troca de Pokémon, em JavaScript dentro do HTML Content — fórmula de dano oficial (nível 50, STAB, tipos, crítico), IA que escolhe golpes e troca quando o confronto é ruim, animações de golpe, modo automático e simulação de 1.000 batalhas.
 - Radar de atributos em SVG, fraquezas/resistências calculadas (até 4× e imunidades), filtros por geração, tipo e lendários.
 
 ## Estrutura
@@ -19,6 +20,7 @@ Relatório Power BI (formato **PBIP**: PBIR + TMDL) que transforma dados públic
 | `Pokemon.Report/` | Relatório (PBIR) gerado pelos scripts |
 | `_staging/m/` | Consultas Power Query (M) |
 | `_staging/dax/medidas.dax` | Medidas DAX (HTML/CSS) |
+| `_staging/arena/` | Motor da Arena (`arena.js`, `arena.css`) e teste em Node |
 | `_staging/build.py` | Grava as consultas e medidas no modelo |
 | `_staging/build_report.py` | Monta a página e os visuais |
 

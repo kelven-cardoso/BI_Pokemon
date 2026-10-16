@@ -1,0 +1,33 @@
+table Eficacia
+
+	column Ataque
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Ataque
+
+	column Defesa
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Defesa
+
+	column Fator
+		dataType: double
+		summarizeBy: none
+		sourceColumn: Fator
+
+	partition Eficacia = m
+		mode: import
+		source =
+				// Tabela de tipos 18x18 (multiplicador do ataque sobre o tipo defensor), usada pela Arena.
+				let
+				    SlugPorId = Record.FromList(Tipos[TipoSlug], List.Transform(Tipos[TipoId], Text.From)),
+				    Linhas = List.Transform(PokeRaw[e], each [
+				        Ataque = Record.Field(SlugPorId, Text.From([damage_type_id])),
+				        Defesa = Record.Field(SlugPorId, Text.From([target_type_id])),
+				        Fator = [damage_factor] / 100
+				    ]),
+				    Tabela = Table.FromRecords(Linhas),
+				    Tipado = Table.TransformColumnTypes(Tabela, {{"Ataque", type text}, {"Defesa", type text}, {"Fator", type number}})
+				in
+				    Tipado
+

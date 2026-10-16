@@ -53,6 +53,11 @@ COLUNAS = {
         ("OrdemTipo", "int64", {}), ("Multiplicador", "double", {}),
     ],
     "PokemonTipos": [("PokemonId", "int64", {}), ("Tipo", "string", {})],
+    "Eficacia": [("Ataque", "string", {}), ("Defesa", "string", {}), ("Fator", "double", {})],
+    "Golpes": [
+        ("Tipo", "string", {}), ("Categoria", "string", {}), ("Papel", "string", {}), ("Nome", "string", {}),
+        ("Poder", "int64", {}), ("Precisao", "int64", {}), ("Prioridade", "int64", {}),
+    ],
     "Modo": [("Modo", "string", {"sortByColumn": "Ordem"}), ("Ordem", "int64", {})],
     "Cartas": [
         ("CartaId", "string", {}), ("NomeCarta", "string", {}), ("Raridade", "string", {}), ("NumeroCarta", "string", {}),
@@ -135,7 +140,56 @@ def ler_medidas():
     for i in range(1, len(partes), 3):
         nome, pasta, corpo = partes[i].strip(), partes[i + 1].strip(), partes[i + 2].strip()
         medidas.append((nome, pasta, corpo))
-    return medidas
+    return medidas + medidas_arena()
+
+
+ARENA_DIR = STAGING / "arena"
+
+
+def literal_dax(texto: str, tamanho: int = 4000) -> str:
+    """Texto -> literais DAX concatenados (pedaços curtos, aspas duplas dobradas)."""
+    texto = texto.replace('"', '""')
+    partes = [texto[i:i + tamanho] for i in range(0, len(texto), tamanho)] or [""]
+    return "\n& ".join(f'"{p}"' for p in partes)
+
+
+def medidas_arena():
+    """<HTML> Arena (dados do modelo + motor JS de arena/arena.js) e <CSS> Arena."""
+    js = (ARENA_DIR / "arena.js").read_text(encoding="utf-8")
+    css = (ARENA_DIR / "arena.css").read_text(encoding="utf-8")
+    if '"' in js:
+        sys.exit("arena.js não pode ter aspas duplas.")
+    html = f'''VAR _pk = CONCATENATEX(
+    ALL(Pokemon),
+    "[" & Pokemon[PokemonId] & ",'" & SUBSTITUTE(Pokemon[Nome], "'", "\\'") & "'," & Pokemon[SpeciesId]
+  & ",'" & Pokemon[Tipo1Slug] & "','" & Pokemon[Tipo2Slug] & "',"
+  & COALESCE(Pokemon[HP], 1) & "," & COALESCE(Pokemon[Ataque], 1) & "," & COALESCE(Pokemon[Defesa], 1) & ","
+  & COALESCE(Pokemon[AtqEsp], 1) & "," & COALESCE(Pokemon[DefEsp], 1) & "," & COALESCE(Pokemon[Velocidade], 1) & ","
+  & IF(Pokemon[IsDefault], 1, 0) & "]",
+    ",", Pokemon[OrdemDex], ASC
+)
+VAR _ef = CONCATENATEX(
+    FILTER(ALL(Eficacia), Eficacia[Fator] <> 1),
+    "'" & Eficacia[Ataque] & ">" & Eficacia[Defesa] & "':" & FORMAT(Eficacia[Fator], "0.0#", "en-US"),
+    ","
+)
+VAR _gp = CONCATENATEX(
+    ALL(Golpes),
+    "['" & Golpes[Tipo] & "','" & Golpes[Categoria] & "','" & Golpes[Papel] & "','" & SUBSTITUTE(Golpes[Nome], "'", "\\'")
+  & "'," & Golpes[Poder] & "," & Golpes[Precisao] & "," & Golpes[Prioridade] & "]",
+    ","
+)
+VAR _tp = CONCATENATEX(ALL(Tipos), Tipos[TipoSlug] & ":['" & Tipos[Tipo] & "','" & Tipos[Cor] & "']", ",", Tipos[Ordem], ASC)
+VAR _versao = COUNTROWS(ALL(Pokemon))
+VAR _dados = "window.ARENA_DADOS={{v:" & _versao & ",pk:[" & _pk & "],ef:{{" & _ef & "}},gp:[" & _gp & "],tp:{{" & _tp & "}}}};"
+VAR _motor =
+{literal_dax(js)}
+RETURN
+    "<div id='arena-raiz'></div><script>" & _dados & "</script><script>" & _motor & "</script>"'''
+    return [
+        ("<HTML> Arena", "<HTML>", html),
+        ("<CSS> Arena", "<HTML>\\CSS", literal_dax(css)),
+    ]
 
 
 def medidas_tmdl() -> str:
@@ -191,7 +245,7 @@ def main():
     shutil.copytree(defn, backup / "definition")
     print("backup:", backup.relative_to(RAIZ))
 
-    tabelas = ["Tipos", "Pokemon", "Fraquezas", "PokemonTipos", "EvoSel", "FormaSel", "Modo", "Cartas"]
+    tabelas = ["Tipos", "Pokemon", "Fraquezas", "PokemonTipos", "EvoSel", "FormaSel", "Modo", "Cartas", "Eficacia", "Golpes"]
     for t in tabelas:
         gravar(defn / "tables" / f"{t}.tmdl", tabela_tmdl(t))
     gravar(defn / "tables" / "_Medidas.tmdl", medidas_tmdl())
@@ -208,7 +262,7 @@ def main():
     # model.tmdl: refs de tabela e ordem das consultas
     model = defn / "model.tmdl"
     texto = model.read_text(encoding="utf-8")
-    ordem = '["PokeRaw","Tipos","Pokemon","Fraquezas","PokemonTipos","EvoSel","FormaSel","Modo","Cartas","_Medidas"]'
+    ordem = '["PokeRaw","Tipos","Pokemon","Fraquezas","PokemonTipos","EvoSel","FormaSel","Modo","Cartas","Eficacia","Golpes","_Medidas"]'
     if "PBI_QueryOrder" in texto:
         texto = re.sub(r"annotation PBI_QueryOrder = .*", f"annotation PBI_QueryOrder = {ordem}", texto)
     else:

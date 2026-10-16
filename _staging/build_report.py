@@ -14,6 +14,8 @@ STAGING = RAIZ / "_staging"
 HTML_VISUAL = "htmlContent443BE3AD55E043BF878BED274D3A6855"  # HTML Content (AppSource, edição padrão)
 SCHEMA_VISUAL = "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json"
 PREFIXO = "a1b2c3d4e5f6"
+PAGINA_ARENA = PREFIXO + "aaaa0002"
+SCHEMA_PAGINA = "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json"
 
 LARGURA, ALTURA = 1280, 720
 FUNDO = "#0B0E14"
@@ -225,7 +227,7 @@ def main():
     escrever(defn / "report.json", rj)
 
     pages = json.loads((defn / "pages" / "pages.json").read_text(encoding="utf-8"))
-    pagina = pages.get("activePageName") or pages["pageOrder"][0]
+    pagina = next(p for p in pages["pageOrder"] if p != PAGINA_ARENA)
     pdir = defn / "pages" / pagina
     pj = json.loads((pdir / "page.json").read_text(encoding="utf-8"))
     pj.update({"displayName": "Pokédex", "displayOption": "FitToPage", "width": LARGURA, "height": ALTURA})
@@ -249,6 +251,27 @@ def main():
             dados["filterConfig"] = filtro
         escrever(vdir / nome / "visual.json", dados)
     print(f"{len(VISUAIS)} visuais gravados em", vdir.relative_to(RAIZ))
+
+    # ---------- página Arena: um visual HTML Content em tela cheia ----------
+    adir = defn / "pages" / PAGINA_ARENA
+    if adir.exists():
+        shutil.rmtree(adir)
+    escrever(adir / "page.json", {
+        "$schema": SCHEMA_PAGINA, "name": PAGINA_ARENA, "displayName": "Arena",
+        "displayOption": "FitToPage", "height": ALTURA, "width": LARGURA,
+        "objects": {
+            "background": [{"properties": {"color": cor(FUNDO), "transparency": lit("0D")}}],
+            "outspace": [{"properties": {"color": cor(FUNDO), "transparency": lit("0D")}}],
+        },
+    })
+    posicao, visual, _ = html_visual(pos(0, 0, LARGURA, ALTURA, 0), "<HTML> Arena", "<CSS> Arena")
+    nome = PREFIXO + "aaaa0101"
+    escrever(adir / "visuals" / nome / "visual.json",
+             {"$schema": SCHEMA_VISUAL, "name": nome, "position": posicao, "visual": visual})
+    if PAGINA_ARENA not in pages["pageOrder"]:
+        pages["pageOrder"].append(PAGINA_ARENA)
+    escrever(defn / "pages" / "pages.json", pages)
+    print("página Arena gravada em", adir.relative_to(RAIZ))
 
 
 if __name__ == "__main__":

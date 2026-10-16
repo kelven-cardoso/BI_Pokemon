@@ -11,7 +11,7 @@ annotation __PBI_TimeIntelligenceEnabled = 0
 
 annotation PBI_ProTooling = ["DevMode"]
 
-annotation PBI_QueryOrder = ["PokeRaw","Tipos","Pokemon","Fraquezas","PokemonTipos","EvoSel","FormaSel","Modo","Cartas","_Medidas"]
+annotation PBI_QueryOrder = ["PokeRaw","Tipos","Pokemon","Fraquezas","PokemonTipos","EvoSel","FormaSel","Modo","Cartas","Eficacia","Golpes","_Medidas"]
 
 ref table Tipos
 ref table Pokemon
@@ -24,3 +24,7 @@ ref table Modo
 ref table Cartas
 
 ref cultureInfo pt-BR
+
+ref table Eficacia
+
+ref table Golpes

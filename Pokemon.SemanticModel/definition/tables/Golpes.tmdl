@@ -1,0 +1,133 @@
+table Golpes
+
+	column Tipo
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Tipo
+
+	column Categoria
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Categoria
+
+	column Papel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Papel
+
+	column Nome
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Nome
+
+	column Poder
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: Poder
+
+	column Precisao
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: Precisao
+
+	column Prioridade
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: Prioridade
+
+	partition Golpes = m
+		mode: import
+		source =
+				// Golpes da Arena: 4 por tipo (forte/médio, físico F / especial E) + golpes de prioridade.
+				// Curados à mão (a PokeAPI não tem nomes em português). Precisao 0 = nunca erra.
+				let
+				    Fonte = #table(
+				        type table [Tipo = text, Categoria = text, Papel = text, Nome = text, Poder = Int64.Type, Precisao = Int64.Type, Prioridade = Int64.Type],
+				        {
+				            {"normal", "F", "forte", "Pancada Corporal", 85, 100, 0},
+				            {"normal", "E", "forte", "Voz Cortante", 90, 100, 0},
+				            {"normal", "F", "medio", "Cabeçada", 70, 100, 0},
+				            {"normal", "E", "medio", "Meteoro", 60, 0, 0},
+				            {"normal", "F", "prio", "Ataque Rápido", 40, 100, 1},
+				            {"fire", "F", "forte", "Investida de Chamas", 120, 100, 0},
+				            {"fire", "E", "forte", "Lança-chamas", 90, 100, 0},
+				            {"fire", "F", "medio", "Presas de Fogo", 65, 95, 0},
+				            {"fire", "E", "medio", "Rajada de Fogo", 110, 85, 0},
+				            {"water", "F", "forte", "Cachoeira", 80, 100, 0},
+				            {"water", "E", "forte", "Hidro Bomba", 110, 80, 0},
+				            {"water", "F", "medio", "Rabo Aquático", 90, 90, 0},
+				            {"water", "E", "medio", "Surfar", 90, 100, 0},
+				            {"water", "F", "prio", "Aqua Jato", 40, 100, 1},
+				            {"grass", "F", "forte", "Lâmina de Folha", 90, 100, 0},
+				            {"grass", "E", "forte", "Bola de Energia", 90, 100, 0},
+				            {"grass", "F", "medio", "Folha Navalha", 55, 95, 0},
+				            {"grass", "E", "medio", "Raio Solar", 120, 100, 0},
+				            {"electric", "F", "forte", "Carga Selvagem", 90, 100, 0},
+				            {"electric", "E", "forte", "Choque do Trovão", 90, 100, 0},
+				            {"electric", "F", "medio", "Soco do Trovão", 75, 100, 0},
+				            {"electric", "E", "medio", "Trovão", 110, 70, 0},
+				            {"ice", "F", "forte", "Queda de Gelo", 85, 90, 0},
+				            {"ice", "E", "forte", "Raio de Gelo", 90, 100, 0},
+				            {"ice", "F", "medio", "Soco de Gelo", 75, 100, 0},
+				            {"ice", "E", "medio", "Nevasca", 110, 70, 0},
+				            {"ice", "F", "prio", "Caco de Gelo", 40, 100, 1},
+				            {"fighting", "F", "forte", "Combate Corpo a Corpo", 120, 100, 0},
+				            {"fighting", "E", "forte", "Esfera de Aura", 80, 0, 0},
+				            {"fighting", "F", "medio", "Quebra-Telha", 75, 100, 0},
+				            {"fighting", "E", "medio", "Explosão Focalizada", 120, 70, 0},
+				            {"fighting", "F", "prio", "Soco Projétil Vácuo", 40, 100, 1},
+				            {"poison", "F", "forte", "Lixo Tóxico", 120, 80, 0},
+				            {"poison", "E", "forte", "Bomba de Lodo", 90, 100, 0},
+				            {"poison", "F", "medio", "Golpe Venenoso", 80, 100, 0},
+				            {"poison", "E", "medio", "Onda de Lodo", 95, 100, 0},
+				            {"ground", "F", "forte", "Terremoto", 100, 100, 0},
+				            {"ground", "E", "forte", "Poder da Terra", 90, 100, 0},
+				            {"ground", "F", "medio", "Tremor", 60, 100, 0},
+				            {"ground", "E", "medio", "Tiro de Lama", 55, 95, 0},
+				            {"flying", "F", "forte", "Pássaro Bravo", 120, 100, 0},
+				            {"flying", "E", "forte", "Vendaval", 110, 70, 0},
+				            {"flying", "F", "medio", "Ataque de Asa", 60, 100, 0},
+				            {"flying", "E", "medio", "Golpe de Ar", 75, 95, 0},
+				            {"psychic", "F", "forte", "Cabeçada Zen", 80, 90, 0},
+				            {"psychic", "E", "forte", "Psíquico", 90, 100, 0},
+				            {"psychic", "F", "medio", "Corte Psíquico", 70, 100, 0},
+				            {"psychic", "E", "medio", "Choque Psíquico", 80, 100, 0},
+				            {"bug", "F", "forte", "Tesoura X", 80, 100, 0},
+				            {"bug", "E", "forte", "Zumbido", 90, 100, 0},
+				            {"bug", "F", "medio", "Ida e Volta", 70, 100, 0},
+				            {"bug", "E", "medio", "Raio Sinal", 75, 100, 0},
+				            {"rock", "F", "forte", "Gume de Pedra", 100, 80, 0},
+				            {"rock", "E", "forte", "Gema Poderosa", 80, 100, 0},
+				            {"rock", "F", "medio", "Deslize de Pedras", 75, 90, 0},
+				            {"rock", "E", "medio", "Poder Ancestral", 60, 100, 0},
+				            {"ghost", "F", "forte", "Garra Sombria", 70, 100, 0},
+				            {"ghost", "E", "forte", "Bola Sombria", 80, 100, 0},
+				            {"ghost", "F", "medio", "Soco Sombrio", 60, 0, 0},
+				            {"ghost", "E", "medio", "Maldição", 65, 100, 0},
+				            {"ghost", "F", "prio", "Furtividade Sombria", 40, 100, 1},
+				            {"dragon", "F", "forte", "Ultraje", 120, 100, 0},
+				            {"dragon", "E", "forte", "Pulso do Dragão", 85, 100, 0},
+				            {"dragon", "F", "medio", "Garra de Dragão", 80, 100, 0},
+				            {"dragon", "E", "medio", "Meteoro do Dragão", 130, 90, 0},
+				            {"dark", "F", "forte", "Mastigada", 80, 100, 0},
+				            {"dark", "E", "forte", "Pulso Sombrio", 80, 100, 0},
+				            {"dark", "F", "medio", "Golpe Baixo", 70, 100, 0},
+				            {"dark", "E", "medio", "Rosnado", 55, 95, 0},
+				            {"dark", "F", "prio", "Soco Surpresa", 70, 100, 1},
+				            {"steel", "F", "forte", "Cabeça de Ferro", 80, 100, 0},
+				            {"steel", "E", "forte", "Canhão de Luz", 80, 100, 0},
+				            {"steel", "F", "medio", "Garra de Metal", 50, 95, 0},
+				            {"steel", "E", "medio", "Raio de Aço", 140, 95, 0},
+				            {"steel", "F", "prio", "Soco Projétil", 40, 100, 1},
+				            {"fairy", "F", "forte", "Brincadeira Bruta", 90, 90, 0},
+				            {"fairy", "E", "forte", "Explosão Lunar", 95, 100, 0},
+				            {"fairy", "F", "medio", "Quebra Espírito", 75, 100, 0},
+				            {"fairy", "E", "medio", "Brilho Deslumbrante", 80, 100, 0}
+				        }
+				    )
+				in
+				    Fonte
+
