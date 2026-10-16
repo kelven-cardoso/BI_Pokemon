@@ -22,9 +22,7 @@ ref table EvoSel
 ref table FormaSel
 ref table Modo
 ref table Cartas
+ref table Eficacia
+ref table Golpes
 
 ref cultureInfo pt-BR
-
-ref table Eficacia
-
-ref table Golpes

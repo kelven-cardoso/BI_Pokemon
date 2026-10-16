@@ -140,10 +140,13 @@ def ler_medidas():
     for i in range(1, len(partes), 3):
         nome, pasta, corpo = partes[i].strip(), partes[i + 1].strip(), partes[i + 2].strip()
         medidas.append((nome, pasta, corpo))
-    return medidas + medidas_arena()
+    return medidas + medidas_paginas_js()
 
 
-ARENA_DIR = STAGING / "arena"
+JS_DIR = STAGING / "js"
+
+# páginas em JavaScript: nome da medida -> arquivos (o comum.* entra antes de todos)
+PAGINAS_JS = {"Arena": "arena", "Matriz Tipos": "tipos", "Quiz": "quiz"}
 
 
 def literal_dax(texto: str, tamanho: int = 4000) -> str:
@@ -153,19 +156,20 @@ def literal_dax(texto: str, tamanho: int = 4000) -> str:
     return "\n& ".join(f'"{p}"' for p in partes)
 
 
-def medidas_arena():
-    """<HTML> Arena (dados do modelo + motor JS de arena/arena.js) e <CSS> Arena."""
-    js = (ARENA_DIR / "arena.js").read_text(encoding="utf-8")
-    css = (ARENA_DIR / "arena.css").read_text(encoding="utf-8")
-    if '"' in js:
-        sys.exit("arena.js não pode ter aspas duplas.")
-    html = f'''VAR _pk = CONCATENATEX(
+def ler_js(nome: str) -> str:
+    texto = (JS_DIR / nome).read_text(encoding="utf-8")
+    if nome.endswith(".js") and '"' in texto:
+        sys.exit(f"{nome} não pode ter aspas duplas.")
+    return texto
+
+
+JS_DADOS = '''VAR _pk = CONCATENATEX(
     ALL(Pokemon),
     "[" & Pokemon[PokemonId] & ",'" & SUBSTITUTE(Pokemon[Nome], "'", "\\'") & "'," & Pokemon[SpeciesId]
   & ",'" & Pokemon[Tipo1Slug] & "','" & Pokemon[Tipo2Slug] & "',"
   & COALESCE(Pokemon[HP], 1) & "," & COALESCE(Pokemon[Ataque], 1) & "," & COALESCE(Pokemon[Defesa], 1) & ","
   & COALESCE(Pokemon[AtqEsp], 1) & "," & COALESCE(Pokemon[DefEsp], 1) & "," & COALESCE(Pokemon[Velocidade], 1) & ","
-  & IF(Pokemon[IsDefault], 1, 0) & "]",
+  & IF(Pokemon[IsDefault], 1, 0) & "," & COALESCE(Pokemon[Geracao], 0) & "]",
     ",", Pokemon[OrdemDex], ASC
 )
 VAR _ef = CONCATENATEX(
@@ -180,16 +184,22 @@ VAR _gp = CONCATENATEX(
     ","
 )
 VAR _tp = CONCATENATEX(ALL(Tipos), Tipos[TipoSlug] & ":['" & Tipos[Tipo] & "','" & Tipos[Cor] & "']", ",", Tipos[Ordem], ASC)
-VAR _versao = COUNTROWS(ALL(Pokemon))
-VAR _dados = "window.ARENA_DADOS={{v:" & _versao & ",pk:[" & _pk & "],ef:{{" & _ef & "}},gp:[" & _gp & "],tp:{{" & _tp & "}}}};"
-VAR _motor =
-{literal_dax(js)}
+VAR _versao = COUNTROWS(ALL(Pokemon)) * 1000 + COUNTROWS(ALL(Golpes))
 RETURN
-    "<div id='arena-raiz'></div><script>" & _dados & "</script><script>" & _motor & "</script>"'''
-    return [
-        ("<HTML> Arena", "<HTML>", html),
-        ("<CSS> Arena", "<HTML>\\CSS", literal_dax(css)),
-    ]
+    "window.ARENA_DADOS={v:" & _versao & ",pk:[" & _pk & "],ef:{" & _ef & "},gp:[" & _gp & "],tp:{" & _tp & "}};"'''
+
+
+def medidas_paginas_js():
+    """[JS Dados] (dados do modelo para o JavaScript) + <HTML>/<CSS> de cada página em JS."""
+    comum_js, comum_css = ler_js("comum.js"), ler_js("comum.css")
+    out = [("JS Dados", "Base", JS_DADOS)]
+    for nome, arq in PAGINAS_JS.items():
+        js = comum_js + "\n" + ler_js(arq + ".js")
+        html = ("VAR _dados = [JS Dados]\nVAR _motor =\n" + literal_dax(js) + "\nRETURN\n"
+                "    \"<div id='app-raiz'></div><script>\" & _dados & \"</script><script>\" & _motor & \"</script>\"")
+        out.append((f"<HTML> {nome}", "<HTML>", html))
+        out.append((f"<CSS> {nome}", "<HTML>\\CSS", literal_dax(comum_css + "\n" + ler_js(arq + ".css"))))
+    return out
 
 
 def medidas_tmdl() -> str:

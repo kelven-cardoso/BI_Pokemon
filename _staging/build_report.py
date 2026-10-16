@@ -15,6 +15,9 @@ HTML_VISUAL = "htmlContent443BE3AD55E043BF878BED274D3A6855"  # HTML Content (App
 SCHEMA_VISUAL = "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json"
 PREFIXO = "a1b2c3d4e5f6"
 PAGINA_ARENA = PREFIXO + "aaaa0002"
+# (id da página, nome exibido, sufixo das medidas <HTML>/<CSS>)
+PAGINAS_JS = [(PAGINA_ARENA, "Arena", "Arena"), (PREFIXO + "aaaa0003", "Tipos", "Matriz Tipos"),
+              (PREFIXO + "aaaa0004", "Quiz", "Quiz")]
 SCHEMA_PAGINA = "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json"
 
 LARGURA, ALTURA = 1280, 720
@@ -74,6 +77,8 @@ def html_visual(pos_, html, css, sampling=None, clicavel=False):
         "stylesheet": [{"properties": {"stylesheet": {"expr": medida(css)}}}],
         "contentFormatting": [{"properties": {"showRawHtml": lit("false")}}],
         "crossFilter": [{"properties": {"enabled": lit("true" if clicavel else "false"), "useTransparency": lit("false")}}],
+        # o próprio visual grava isto ao abrir (modo de linhas em dois divs, usado por todo o CSS)
+        "compatibility": [{"properties": {"legacyRendering": lit("true")}}],
     }
     return pos_, {"visualType": HTML_VISUAL, "query": query, "objects": objects,
                   "visualContainerObjects": container(), "drillFilterOtherVisuals": True}, None
@@ -168,15 +173,35 @@ def filtro_valor(nome, tabela, col, valor):
     }]}
 
 
+def navegador(pos_):
+    """Navegador de páginas nativo (pageNavigator) em pílulas."""
+    def est(padrao, hover, sel):
+        return [{"properties": padrao, "selector": {"id": "default"}},
+                {"properties": hover, "selector": {"id": "hover"}},
+                {"properties": sel, "selector": {"id": "selected"}}]
+    objects = {
+        "layout": [{"properties": {"cellPadding": lit("6L")}}],
+        "shape": [{"properties": {"tileShape": lit("'pill'")}}],
+        "fill": est({"show": lit("true"), "fillColor": cor("#1A2030"), "transparency": lit("0D")},
+                    {"fillColor": cor("#252D40")}, {"fillColor": cor(DESTAQUE)}),
+        "text": est({"show": lit("true"), "fontColor": cor("#C9CFDA"), "fontSize": lit("9D"), "bold": lit("true")},
+                    {"fontColor": cor("#FFFFFF")}, {"fontColor": cor("#11151D")}),
+        "outline": est({"show": lit("true"), "lineColor": cor("#283041"), "weight": lit("1D")},
+                       {"lineColor": cor("#FFFFFF")}, {"lineColor": cor(DESTAQUE)}),
+    }
+    return pos_, {"visualType": "pageNavigator", "objects": objects,
+                  "visualContainerObjects": container(), "drillFilterOtherVisuals": True}, None
+
+
 VISUAIS = {
     "01": html_visual(pos(0, 0, LARGURA, ALTURA, 0), "<HTML> Fundo", "<CSS> Fundo"),
-    "02": html_visual(pos(24, 18, 320, 48, 1000), "<HTML> Marca", "<CSS> Marca"),
-    "03": dropdown(pos(16, 74, 118, 34, 2000), "Pokemon", "GeracaoLabel"),
-    "04": dropdown(pos(140, 74, 118, 34, 3000), "PokemonTipos", "Tipo"),
-    "13": botoes(pos(264, 74, 84, 34, 3500), "Pokemon", "Especial", colunas=1, linhas=1, orientacao=2,
+    "02": html_visual(pos(24, 48, 320, 40, 1000), "<HTML> Marca", "<CSS> Marca"),
+    "03": dropdown(pos(16, 94, 118, 32, 2000), "Pokemon", "GeracaoLabel"),
+    "04": dropdown(pos(140, 94, 118, 32, 3000), "PokemonTipos", "Tipo"),
+    "13": botoes(pos(264, 94, 84, 32, 3500), "Pokemon", "Especial", colunas=1, linhas=1, orientacao=2,
                  fonte=9, raio=10, fundo_container=None, pad=0, cor_sel=DESTAQUE, texto_sel="#11151D",
                  filtro_visual=filtro_valor(PREFIXO + "f0000002", "Pokemon", "Especial", "'★ Lendários'")),
-    "05": botoes(pos(16, 116, 332, 588, 4000), "Pokemon", "Nome", colunas=3, linhas=5, orientacao=0,
+    "05": botoes(pos(16, 134, 332, 570, 4000), "Pokemon", "Nome", colunas=3, linhas=5, orientacao=0,
                  imagem="ImgSprite", busca=True),
     "06": html_visual(pos(364, 14, 472, 462, 5000), "<HTML> Hero", "<CSS> Hero"),
     "14": botoes(pos(520, 18, 316, 30, 5500), "Modo", "Modo", colunas=3, linhas=1, orientacao=2,
@@ -189,6 +214,7 @@ VISUAIS = {
     "11": html_visual(pos(856, 552, 408, 152, 10000), "<HTML> Formas Moldura", "<CSS> Moldura"),
     "12": html_visual(pos(868, 590, 384, 108, 11000), "<HTML> Formas Item", "<CSS> Formas Item",
                       sampling=("FormaSel", "OrdemDex"), clicavel=True),
+    "15": navegador(pos(16, 12, 332, 30, 20000)),
 }
 
 # só formas padrão na lista (as variantes aparecem no painel Formas)
@@ -227,7 +253,7 @@ def main():
     escrever(defn / "report.json", rj)
 
     pages = json.loads((defn / "pages" / "pages.json").read_text(encoding="utf-8"))
-    pagina = next(p for p in pages["pageOrder"] if p != PAGINA_ARENA)
+    pagina = next(p for p in pages["pageOrder"] if not p.startswith(PREFIXO + "aaaa"))
     pdir = defn / "pages" / pagina
     pj = json.loads((pdir / "page.json").read_text(encoding="utf-8"))
     pj.update({"displayName": "Pokédex", "displayOption": "FitToPage", "width": LARGURA, "height": ALTURA})
@@ -252,26 +278,31 @@ def main():
         escrever(vdir / nome / "visual.json", dados)
     print(f"{len(VISUAIS)} visuais gravados em", vdir.relative_to(RAIZ))
 
-    # ---------- página Arena: um visual HTML Content em tela cheia ----------
-    adir = defn / "pages" / PAGINA_ARENA
-    if adir.exists():
-        shutil.rmtree(adir)
-    escrever(adir / "page.json", {
-        "$schema": SCHEMA_PAGINA, "name": PAGINA_ARENA, "displayName": "Arena",
-        "displayOption": "FitToPage", "height": ALTURA, "width": LARGURA,
-        "objects": {
-            "background": [{"properties": {"color": cor(FUNDO), "transparency": lit("0D")}}],
-            "outspace": [{"properties": {"color": cor(FUNDO), "transparency": lit("0D")}}],
-        },
-    })
-    posicao, visual, _ = html_visual(pos(0, 0, LARGURA, ALTURA, 0), "<HTML> Arena", "<CSS> Arena")
-    nome = PREFIXO + "aaaa0101"
-    escrever(adir / "visuals" / nome / "visual.json",
-             {"$schema": SCHEMA_VISUAL, "name": nome, "position": posicao, "visual": visual})
-    if PAGINA_ARENA not in pages["pageOrder"]:
-        pages["pageOrder"].append(PAGINA_ARENA)
+    # ---------- páginas em JavaScript: um visual HTML Content em tela cheia + navegador ----------
+    for pid, titulo, medida in PAGINAS_JS:
+        adir = defn / "pages" / pid
+        if adir.exists():
+            shutil.rmtree(adir)
+        escrever(adir / "page.json", {
+            "$schema": SCHEMA_PAGINA, "name": pid, "displayName": titulo,
+            "displayOption": "FitToPage", "height": ALTURA, "width": LARGURA,
+            "objects": {
+                "background": [{"properties": {"color": cor(FUNDO), "transparency": lit("0D")}}],
+                "outspace": [{"properties": {"color": cor(FUNDO), "transparency": lit("0D")}}],
+            },
+        })
+        itens = [(pid[-4:] + "0101", html_visual(pos(0, 0, LARGURA, ALTURA, 0), f"<HTML> {medida}", f"<CSS> {medida}")),
+                 (pid[-4:] + "0199", navegador(pos(16, 12, 340, 30, 1000)))]
+        for sufixo, (posicao, visual, _) in itens:
+            nome = PREFIXO + sufixo
+            escrever(adir / "visuals" / nome / "visual.json",
+                     {"$schema": SCHEMA_VISUAL, "name": nome, "position": posicao, "visual": visual})
+        if pid not in pages["pageOrder"]:
+            pages["pageOrder"].append(pid)
+        print(f"página {titulo} gravada em", adir.relative_to(RAIZ))
+    pages["pageOrder"] = [pagina] + [pid for pid, _, _ in PAGINAS_JS]
+    pages["activePageName"] = pagina
     escrever(defn / "pages" / "pages.json", pages)
-    print("página Arena gravada em", adir.relative_to(RAIZ))
 
 
 if __name__ == "__main__":

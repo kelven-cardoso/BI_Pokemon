@@ -1,0 +1,73 @@
+/* Teste das páginas em JS fora do Power BI:  node _staging/js/teste_arena.js <resposta-graphql.json>
+   Monta window.ARENA_DADOS com os dados da PokeAPI e as tabelas Golpes/Tipos dos arquivos .m,
+   roda comum.js + cada página com um DOM mínimo e imprime golpes e simulações da Arena. */
+const fs = require('fs');
+const path = require('path');
+const dir = __dirname;
+const resp = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')).data;
+
+const tiposM = fs.readFileSync(path.join(dir, '..', 'm', 'Tipos.m'), 'utf8');
+const tp = {};
+for (const m of tiposM.matchAll(/\{"([a-z]+)", "([^"]+)", "(#[0-9A-Fa-f]{6})"/g)) tp[m[1]] = [m[2], m[3]];
+const slug = Object.fromEntries(resp.t.map(t => [t.id, t.name]));
+const golpesM = fs.readFileSync(path.join(dir, '..', 'm', 'Golpes.m'), 'utf8');
+const gp = [...golpesM.matchAll(/\{"([a-z]+)", "([FE])", "([a-z]+)", "([^"]+)", (\d+), (\d+), (\d+)\}/g)]
+  .map(m => [m[1], m[2], m[3], m[4], +m[5], +m[6], +m[7]]);
+const ef = {};
+resp.e.forEach(e => { if (e.damage_factor !== 100) ef[slug[e.damage_type_id] + '>' + slug[e.target_type_id]] = e.damage_factor / 100; });
+const esp = Object.fromEntries(resp.s.map(s => [s.id, s]));
+const pk = resp.p.map(p => {
+  const st = Object.fromEntries(p.pokemon_v2_pokemonstats.map(s => [s.stat_id, s.base_stat]));
+  const ts = p.pokemon_v2_pokemontypes.sort((a, b) => a.slot - b.slot).map(t => slug[t.type_id]);
+  const s = esp[p.pokemon_species_id];
+  return [p.id, (s.n.length ? s.n[0].name : s.name) + (p.is_default ? '' : ' (' + p.name + ')'), p.pokemon_species_id,
+    ts[0], ts[1] || '', st[1], st[2], st[3], st[4], st[5], st[6], p.is_default ? 1 : 0, s.generation_id];
+});
+
+function elemento() {
+  return { style: { setProperty() {} }, classList: { add() {}, remove() {}, contains: () => false }, innerHTML: '',
+    addEventListener() {}, querySelectorAll: () => [], querySelector: () => null, focus() {}, appendChild() {} };
+}
+let raiz;
+global.window = { addEventListener() {}, ARENA_DADOS: { v: pk.length, pk, ef, gp, tp }, localStorage: { getItem: () => null, setItem() {} } };
+global.document = { getElementById: id => (id === 'app-raiz' ? raiz : elemento()), createElement: elemento };
+global.setTimeout = () => 0; global.setInterval = () => 0; global.clearInterval = () => {};
+const ler = f => fs.readFileSync(path.join(dir, f), 'utf8');
+eval(ler('comum.js'));
+for (const pag of ['arena', 'tipos', 'quiz']) {
+  raiz = Object.assign(elemento(), { clientWidth: 1280, clientHeight: 720 });
+  eval(ler(pag + '.js'));
+  console.log(pag.padEnd(6), 'renderizou', raiz.innerHTML.length, 'caracteres');
+}
+
+const api = window.__arenaApi, P = window.PK.P;
+for (const id of [6, 9, 25, 94, 445, 83]) {
+  const p = P[id];
+  console.log(p.nome.padEnd(12), ('Gen ' + p.gen).padEnd(6), p.t.join('/').padEnd(16), api.golpesDe(p).map(g => `${g.nome} (${g.t} ${g.c} ${g.pw})`).join(', '));
+}
+window.__arena.time = { j: [6], o: [9] };
+function rodada(a, b, n = 1000) {
+  let vj = 0, tt = 0;
+  for (let i = 0; i < n; i++) { const r = api.simular(a, b); if (r.venc === 'j') vj++; tt += r.turnos; }
+  return `${(100 * vj / n).toFixed(1)}% x ${(100 - 100 * vj / n).toFixed(1)}% · ${(tt / n).toFixed(1)} turnos`;
+}
+console.log('Charizard x Blastoise    :', rodada([6], [9]));
+console.log('Pikachu x Gyarados       :', rodada([25], [130]));
+console.log('Time [6,9,3] x [25,94,149]:', rodada([6, 9, 3], [25, 94, 149]));
+
+/* ---------- fluxos: batalha com time de 3 e uma rodada do quiz ---------- */
+function clicar(acao, attrs) {
+  const el = { classList: { contains: () => false }, getAttribute: k => (k === 'data-acao' ? acao : (attrs || {})[k]) };
+  raiz.onclick({ target: { closest: () => el }, stopPropagation() {} });
+}
+raiz = Object.assign(elemento(), { clientWidth: 1280, clientHeight: 720 });
+Object.assign(window.__arena, { modo: 3, time: { j: [6, 9, 3], o: [25, 94, 149] }, tela: 'selecao' });
+eval(ler('arena.js'));
+clicar('batalhar');
+console.log('arena  batalha:', window.__arena.tela, '| cartas:', raiz.innerHTML.includes('carta-o'), '|', raiz.innerHTML.length, 'caracteres');
+raiz = Object.assign(elemento(), { clientWidth: 1280, clientHeight: 720 });
+eval(ler('quiz.js'));
+clicar('comecar'); clicar('dica'); clicar('dica'); clicar('dica');
+console.log('quiz   pergunta:', window.__quiz.fase, '| opções:', window.__quiz.opcoes.length, '| dica de letras:', raiz.innerHTML.includes('qz-letras'));
+clicar('resp', { 'data-id': String(window.__quiz.atual) });
+console.log('quiz   resposta:', window.__quiz.fase, '| pontos:', window.__quiz.pontos, '| acertou:', raiz.innerHTML.includes('ACERTOU'));
