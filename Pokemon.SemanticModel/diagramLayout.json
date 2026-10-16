@@ -1,0 +1,139 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 173.81112634073168,
+        "y": 0
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 852.38305001469371,
+            "y": 25
+          },
+          "nodeIndex": "_Medidas",
+          "nodeLineageTag": "c3f4b347-b57b-482a-b8af-ff4fd19486ba",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1136.3830500146937,
+            "y": 25
+          },
+          "nodeIndex": "Cartas",
+          "nodeLineageTag": "41039f9b-8acb-45e1-bf4f-ac85356c71ef",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1420.3830500146937,
+            "y": 25
+          },
+          "nodeIndex": "EvoSel",
+          "nodeLineageTag": "048403ed-50d8-42bf-a097-9e5507282140",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1704.3830500146937,
+            "y": 27
+          },
+          "nodeIndex": "FormaSel",
+          "nodeLineageTag": "f0fa1b13-c70a-4a0b-907f-23f8d60a06f8",
+          "size": {
+            "height": 296,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 618.38305001469371,
+            "y": -7.8446979598450071
+          },
+          "nodeIndex": "Fraquezas",
+          "nodeLineageTag": "9c22170d-037f-4c90-9ef2-ff2b7108663e",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1988.3830500146937,
+            "y": 111
+          },
+          "nodeIndex": "Modo",
+          "nodeLineageTag": "cdbf012c-eba7-4eb2-86c5-c0e1eec6173d",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 334.20156119318523,
+            "y": -25
+          },
+          "nodeIndex": "Pokemon",
+          "nodeLineageTag": "40463950-f6e8-4e63-8607-c5bf4227298f",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 50,
+            "y": 58.140412819753067
+          },
+          "nodeIndex": "PokemonTipos",
+          "nodeLineageTag": "7eb6fdde-ece0-4225-baaa-768eceb6a44e",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 2272.3830500146937,
+            "y": 75
+          },
+          "nodeIndex": "Tipos",
+          "nodeLineageTag": "a9ccd491-1bef-4849-94d3-d6e68507c2c2",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        }
+      ],
+      "name": "Todas as tabelas",
+      "zoomValue": 63.287087723234038,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "Todas as tabelas",
+  "defaultDiagram": "Todas as tabelas"
+}

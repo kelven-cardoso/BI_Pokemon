@@ -1,0 +1,140 @@
+table Cartas
+
+	column CartaId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CartaId
+
+	column NomeCarta
+		dataType: string
+		summarizeBy: none
+		sourceColumn: NomeCarta
+
+	column Raridade
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Raridade
+
+	column NumeroCarta
+		dataType: string
+		summarizeBy: none
+		sourceColumn: NumeroCarta
+
+	column Colecao
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Colecao
+
+	column Serie
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Serie
+
+	column Lancamento
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		summarizeBy: none
+		sourceColumn: Lancamento
+
+	column SpeciesId
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: SpeciesId
+
+	column ImgCarta
+		dataType: string
+		dataCategory: ImageUrl
+		summarizeBy: none
+		sourceColumn: ImgCarta
+
+	column ImgCartaGrande
+		dataType: string
+		dataCategory: ImageUrl
+		summarizeBy: none
+		sourceColumn: ImgCartaGrande
+
+	column RaridadeOrdem
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: RaridadeOrdem
+
+	column RaridadePT
+		dataType: string
+		summarizeBy: none
+		sourceColumn: RaridadePT
+
+	column TagForma
+		dataType: string
+		summarizeBy: none
+		sourceColumn: TagForma
+
+	partition Cartas = m
+		mode: import
+		source =
+				// Cartas do Pokémon TCG (repositório oficial de dados: PokemonTCG/pokemon-tcg-data).
+				// Uma linha por carta x número da Pokédex (cartas "tag team" têm mais de um).
+				let
+				    Raiz = "https://raw.githubusercontent.com",
+				    Caminho = "PokemonTCG/pokemon-tcg-data/master/",
+				    Ler = (rel as text) => Json.Document(Web.Contents(Raiz, [RelativePath = Caminho & rel])),
+				    Colecoes = List.Transform(Ler("sets/en.json"), each [
+				        SetId = [id], Colecao = [name], Serie = [series], Lancamento = [releaseDate]
+				    ]),
+				    PorColecao = List.Transform(Colecoes, (s) =>
+				        let
+				            cartas = try Ler("cards/en/" & s[SetId] & ".json") otherwise {},
+				            pokemon = List.Select(cartas, each Record.FieldOrDefault(_, "supertype", "") = "Pokémon"
+				                and Record.HasFields(_, "nationalPokedexNumbers"))
+				        in
+				            List.Transform(pokemon, (c) => [
+				                CartaId = c[id],
+				                NomeCarta = c[name],
+				                Raridade = Record.FieldOrDefault(c, "rarity", null) ?? "Sem raridade",
+				                NumeroCarta = c[number],
+				                Colecao = s[Colecao],
+				                Serie = s[Serie],
+				                Lancamento = s[Lancamento],
+				                Dex = c[nationalPokedexNumbers],
+				                ImgCarta = Record.FieldOrDefault(Record.FieldOrDefault(c, "images", []), "small", null),
+				                ImgCartaGrande = Record.FieldOrDefault(Record.FieldOrDefault(c, "images", []), "large", null)
+				            ])
+				    ),
+				    Tabela = Table.SelectRows(Table.FromRecords(List.Combine(PorColecao)), each [ImgCarta] <> null),
+				    PorDex = Table.ExpandListColumn(Tabela, "Dex"),
+				    Renomeado = Table.RenameColumns(PorDex, {{"Dex", "SpeciesId"}}),
+				    Data = Table.TransformColumns(Renomeado, {{"Lancamento", each Date.FromText(Text.Replace(_, "/", "-")), type date}}),
+				    Ranking = {"Mega Hyper Rare", "Hyper Rare", "Special Illustration Rare", "Rare Rainbow", "Rare Secret",
+				        "Shiny Ultra Rare", "Ultra Rare", "Illustration Rare", "Rare Ultra", "Rare Shiny GX", "Rare Shiny", "Shiny Rare",
+				        "Rare Holo Star", "Rare Shining", "Amazing Rare", "Radiant Rare", "Rare Prism Star", "Rare Holo VMAX",
+				        "Holo Rare VMAX", "Rare Holo VSTAR", "Holo Rare VSTAR", "Rare Holo V", "Holo Rare V", "Rare Holo GX",
+				        "Rare Holo EX", "Rare Holo ex", "Double Rare", "LEGEND", "Rare BREAK", "Rare Prime", "Rare Holo LV.X",
+				        "Trainer Gallery Rare Holo", "Classic Collection", "Pikachu Rare", "MEGA_ATTACK_RARE", "Futuristic Rare",
+				        "Black White Rare", "Rare Holo", "Promo", "Rare", "Uncommon", "Common"},
+				    Ordem = Table.AddColumn(Data, "RaridadeOrdem", each
+				        let i = List.PositionOf(Ranking, [Raridade]) in if i < 0 then 99 else i + 1, Int64.Type),
+				    Traduzido = Table.AddColumn(Ordem, "RaridadePT", each
+				        if [Raridade] = "Common" then "Comum"
+				        else if [Raridade] = "Uncommon" then "Incomum"
+				        else if [Raridade] = "Rare" then "Rara"
+				        else if [Raridade] = "Rare Holo" then "Rara Holo"
+				        else Text.Replace([Raridade], "_", " "), type text),
+				    Tag = Table.AddColumn(Traduzido, "TagForma", each
+				        let n = [NomeCarta] in
+				            if Text.StartsWith(n, "M ") or Text.StartsWith(n, "Mega ") then "Mega"
+				            else if Text.Contains(n, "VMAX") then "Gigantamax"
+				            else if Text.Contains(n, "Alolan") then "Alola"
+				            else if Text.Contains(n, "Galarian") then "Galar"
+				            else if Text.Contains(n, "Hisuian") then "Hisui"
+				            else if Text.Contains(n, "Paldean") then "Paldea"
+				            else "Base",
+				        type text),
+				    Tipado = Table.TransformColumnTypes(Tag, {
+				        {"CartaId", type text}, {"NomeCarta", type text}, {"Raridade", type text}, {"NumeroCarta", type text},
+				        {"Colecao", type text}, {"Serie", type text}, {"SpeciesId", Int64.Type},
+				        {"ImgCarta", type text}, {"ImgCartaGrande", type text}
+				    })
+				in
+				    Tipado
+

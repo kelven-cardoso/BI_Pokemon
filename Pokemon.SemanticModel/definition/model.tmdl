@@ -1,0 +1,26 @@
+model Model
+	culture: pt-BR
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: pt-BR
+	valueFilterBehavior: independent
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_ProTooling = ["DevMode"]
+
+annotation PBI_QueryOrder = ["PokeRaw","Tipos","Pokemon","Fraquezas","PokemonTipos","EvoSel","FormaSel","Modo","Cartas","_Medidas"]
+
+ref table Tipos
+ref table Pokemon
+ref table Fraquezas
+ref table PokemonTipos
+ref table _Medidas
+ref table EvoSel
+ref table FormaSel
+ref table Modo
+ref table Cartas
+
+ref cultureInfo pt-BR

@@ -1,0 +1,84 @@
+table EvoSel
+
+	column PokemonId
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: PokemonId
+
+	column SpeciesId
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: SpeciesId
+
+	column ChainId
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: ChainId
+
+	column Estagio
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: Estagio
+
+	column IsDefault
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsDefault
+
+	column NomeEspecie
+		dataType: string
+		summarizeBy: none
+		sourceColumn: NomeEspecie
+
+	column Nome
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Nome
+
+	column Tipo1Slug
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Tipo1Slug
+
+	column NivelEvolucao
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: NivelEvolucao
+
+	column ImgGif
+		dataType: string
+		dataCategory: ImageUrl
+		summarizeBy: none
+		sourceColumn: ImgGif
+
+	column ImgGifShiny
+		dataType: string
+		dataCategory: ImageUrl
+		summarizeBy: none
+		sourceColumn: ImgGifShiny
+
+	column OrdemEvo
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: OrdemEvo
+
+	partition EvoSel = m
+		mode: import
+		source =
+				// Cópia desconectada (sem relacionamento) usada pelo visual de Evolução.
+				// O clique num estágio filtra só esta tabela; as medidas leem o clique com ISFILTERED.
+				let
+				    Base = Table.SelectColumns(Pokemon,
+				        {"PokemonId", "SpeciesId", "ChainId", "Estagio", "IsDefault", "NomeEspecie", "Nome",
+				         "Tipo1Slug", "NivelEvolucao", "ImgGif", "ImgGifShiny"}),
+				    Ordem = Table.AddColumn(Base, "OrdemEvo", each
+				        [Estagio] * 100000000 + [SpeciesId] * 100000 + [PokemonId], Int64.Type)
+				in
+				    Ordem
+

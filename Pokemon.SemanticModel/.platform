@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "Pokemon"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "f3fc2194-b989-46a2-9024-aa1953f3141f"
+  }
+}

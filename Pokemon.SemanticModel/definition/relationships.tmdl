@@ -1,0 +1,9 @@
+relationship 9648b650-0492-4b33-929b-08076b452169
+	fromColumn: Fraquezas.PokemonId
+	toColumn: Pokemon.PokemonId
+
+relationship e82f9857-a3f5-4138-81cc-e0c166b7c338
+	crossFilteringBehavior: bothDirections
+	fromColumn: PokemonTipos.PokemonId
+	toColumn: Pokemon.PokemonId
+

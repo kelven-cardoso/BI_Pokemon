@@ -1,0 +1,156 @@
+let
+    // ---------- auxiliares ----------
+    TipoPorId = Record.FromList(Table.ToRecords(Tipos), List.Transform(Tipos[TipoId], Text.From)),
+    Regioes = Record.FromList(
+        List.Transform(PokeRaw[g], each [pokemon_v2_region][name]),
+        List.Transform(PokeRaw[g], each Text.From([id]))
+    ),
+    Stat = (lista as list, id as number) as nullable number =>
+        let s = List.Select(lista, each [stat_id] = id) in if List.IsEmpty(s) then null else s{0}[base_stat],
+    LimparTexto = (t as nullable text) as nullable text =>
+        if t = null then null
+        else Text.Combine(List.Select(Text.SplitAny(t, "#(lf)#(cr)#(000C)"), each _ <> ""), " "),
+
+    // ---------- espécies ----------
+    Especies = List.Transform(PokeRaw[s], (r) => [
+        SpeciesId = r[id],
+        SlugEspecie = r[name],
+        NomeEspecie = if List.IsEmpty(r[n]) then Text.Proper(r[name]) else r[n]{0}[name],
+        Categoria = if List.IsEmpty(r[n]) then null else r[n]{0}[genus],
+        Descricao = if List.IsEmpty(r[d]) then null else LimparTexto(r[d]{0}[flavor_text]),
+        Geracao = r[generation_id],
+        ChainId = r[evolution_chain_id],
+        EvoluiDe = r[evolves_from_species_id],
+        NivelEvolucao = if List.IsEmpty(r[pokemon_v2_pokemonevolutions]) then null
+            else r[pokemon_v2_pokemonevolutions]{0}[min_level],
+        Lendario = r[is_legendary],
+        Mitico = r[is_mythical]
+    ]),
+    PaiDe = Record.FromList(
+        List.Transform(Especies, each [EvoluiDe]),
+        List.Transform(Especies, each Text.From([SpeciesId]))
+    ),
+    Estagio = (id as number) as number =>
+        let pai = Record.FieldOrDefault(PaiDe, Text.From(id), null)
+        in if pai = null then 1 else 1 + @Estagio(pai),
+    EspTab = Table.FromRecords(Especies),
+    EspEstagio = Table.AddColumn(EspTab, "Estagio", each Estagio([SpeciesId]), Int64.Type),
+    MaxCadeia = Table.Group(EspEstagio, {"ChainId"}, {{"EstagiosCadeia", each List.Max([Estagio]), Int64.Type}}),
+    EspJuntado = Table.NestedJoin(EspEstagio, {"ChainId"}, MaxCadeia, {"ChainId"}, "mx", JoinKind.LeftOuter),
+    EspFinal = Table.ExpandTableColumn(EspJuntado, "mx", {"EstagiosCadeia"}),
+
+    // ---------- pokémon (inclui formas) ----------
+    Pokes = List.Transform(PokeRaw[p], (r) =>
+        let
+            tipos = List.Sort(r[pokemon_v2_pokemontypes], each [slot]),
+            t1 = Record.Field(TipoPorId, Text.From(tipos{0}[type_id])),
+            t2 = if List.Count(tipos) > 1 then Record.Field(TipoPorId, Text.From(tipos{1}[type_id])) else null,
+            st = r[pokemon_v2_pokemonstats],
+            fm = r[pokemon_v2_pokemonforms]
+        in [
+            PokemonId = r[id],
+            Slug = r[name],
+            SpeciesId = r[pokemon_species_id],
+            IsDefault = r[is_default],
+            FormaSlug = if List.IsEmpty(fm) then "" else fm{0}[form_name],
+            IsMega = if List.IsEmpty(fm) then false else fm{0}[is_mega],
+            AlturaM = r[height] / 10,
+            PesoKg = r[weight] / 10,
+            Tipo1 = t1[Tipo],
+            Tipo1Slug = t1[TipoSlug],
+            Cor1 = t1[Cor],
+            Tipo2 = if t2 = null then null else t2[Tipo],
+            Tipo2Slug = if t2 = null then null else t2[TipoSlug],
+            Cor2 = if t2 = null then null else t2[Cor],
+            HP = Stat(st, 1),
+            Ataque = Stat(st, 2),
+            Defesa = Stat(st, 3),
+            AtqEsp = Stat(st, 4),
+            DefEsp = Stat(st, 5),
+            Velocidade = Stat(st, 6)
+        ]
+    ),
+    PokeTab = Table.FromRecords(Pokes),
+    Juntado = Table.NestedJoin(PokeTab, {"SpeciesId"}, EspFinal, {"SpeciesId"}, "esp", JoinKind.LeftOuter),
+    Expandido = Table.ExpandTableColumn(
+        Juntado, "esp",
+        {"SlugEspecie", "NomeEspecie", "Categoria", "Descricao", "Geracao", "ChainId", "EvoluiDe", "NivelEvolucao",
+         "Lendario", "Mitico", "Estagio", "EstagiosCadeia"}
+    ),
+
+    // ---------- colunas derivadas ----------
+    // rótulo da forma a partir do sufixo do slug (charizard-mega-x -> "Mega X")
+    Forma = Table.AddColumn(Expandido, "Forma", each
+        let
+            sufixo = if Text.StartsWith([Slug], [SlugEspecie] & "-")
+                then Text.Middle([Slug], Text.Length([SlugEspecie]) + 1)
+                else [FormaSlug],
+            rotulo = if [IsDefault] and ([FormaSlug] = "" or [FormaSlug] = null) then "Base"
+                else if sufixo = "" or sufixo = null then "Base"
+                else Text.Replace(Text.Proper(Text.Replace(sufixo, "-", " ")), "Gmax", "Gigantamax")
+        in
+            rotulo,
+        type text),
+    Nome = Table.AddColumn(Forma, "Nome", each
+        if [Forma] = "Base" then [NomeEspecie] else [NomeEspecie] & " " & [Forma], type text),
+    Numero = Table.AddColumn(Nome, "Numero", each "#" & Text.PadStart(Text.From([SpeciesId]), 3, "0"), type text),
+    Total = Table.AddColumn(Numero, "Total", each
+        List.Sum({[HP], [Ataque], [Defesa], [AtqEsp], [DefEsp], [Velocidade]}), Int64.Type),
+    Regiao = Table.AddColumn(Total, "Regiao", each
+        Text.Proper(Record.FieldOrDefault(Regioes, Text.From([Geracao]), "")), type text),
+    GenLabel = Table.AddColumn(Regiao, "GeracaoLabel", each [Regiao] & " - Gen " & Text.From([Geracao]), type text),
+    Raridade = Table.AddColumn(GenLabel, "Raridade", each
+        if [Mitico] then "Mítico" else if [Lendario] then "Lendário" else "Comum", type text),
+    // IDs sem GIF animado (showdown) no repositório de sprites: usam a imagem Home
+    SemGif = {990, 991, 992, 993, 994, 995, 1006, 1008, 1010, 1017, 1022, 1023, 1024, 1025, 10072, 10075, 10078, 10079, 10081, 10082, 10084, 10085, 10086, 10087, 10088, 10089, 10257, 10264, 10265, 10266, 10267, 10268, 10269, 10270, 10271, 10273, 10274, 10275, 10276, 10277},
+    BaseImg = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/",
+    ImgArte = Table.AddColumn(Raridade, "ImgArte", each
+        BaseImg & "other/official-artwork/" & Text.From([PokemonId]) & ".png", type text),
+    ImgHome = Table.AddColumn(ImgArte, "ImgHome", each
+        BaseImg & "other/home/" & Text.From([PokemonId]) & ".png", type text),
+    ImgSprite = Table.AddColumn(ImgHome, "ImgSprite", each
+        BaseImg & Text.From([PokemonId]) & ".png", type text),
+    ImgGif = Table.AddColumn(ImgSprite, "ImgGif", each
+        if List.Contains(SemGif, [PokemonId]) then [ImgHome]
+        else BaseImg & "other/showdown/" & Text.From([PokemonId]) & ".gif", type text),
+    // versões shiny (com reserva na imagem normal quando o repositório não tem o arquivo)
+    SemGifShiny = {990, 991, 992, 993, 994, 995, 1006, 1008, 1010, 1017, 1022, 1023, 1024, 1025, 10257, 10264, 10265, 10266, 10267, 10268, 10269, 10270, 10271, 10273, 10274, 10275, 10276, 10277},
+    SemArteShiny = {10158, 10159, 10264, 10266, 10268, 10270, 10277},
+    ImgArteShiny = Table.AddColumn(ImgGif, "ImgArteShiny", each
+        if List.Contains(SemArteShiny, [PokemonId]) then [ImgArte]
+        else BaseImg & "other/official-artwork/shiny/" & Text.From([PokemonId]) & ".png", type text),
+    ImgHomeShiny = Table.AddColumn(ImgArteShiny, "ImgHomeShiny", each
+        BaseImg & "other/home/shiny/" & Text.From([PokemonId]) & ".png", type text),
+    ImgGifShiny = Table.AddColumn(ImgHomeShiny, "ImgGifShiny", each
+        if List.Contains(SemGifShiny, [PokemonId]) then [ImgHomeShiny]
+        else BaseImg & "other/showdown/shiny/" & Text.From([PokemonId]) & ".gif", type text),
+    // ★ para o filtro de lendários e míticos
+    Especial = Table.AddColumn(ImgGifShiny, "Especial", each
+        if [Lendario] or [Mitico] then "★ Lendários" else "Comuns", type text),
+    // forma usada para casar com as cartas TCG (mesma regra de Cartas.m)
+    TagCarta = Table.AddColumn(Especial, "TagCarta", each
+        let f = [Forma] in
+            if Text.StartsWith(f, "Mega") then "Mega"
+            else if Text.StartsWith(f, "Gigantamax") then "Gigantamax"
+            else if Text.StartsWith(f, "Alola") then "Alola"
+            else if Text.StartsWith(f, "Galar") then "Galar"
+            else if Text.StartsWith(f, "Hisui") then "Hisui"
+            else if Text.StartsWith(f, "Paldea") then "Paldea"
+            else "Base",
+        type text),
+    OrdemDex = Table.AddColumn(TagCarta, "OrdemDex", each [SpeciesId] * 100000 + [PokemonId], Int64.Type),
+
+    Tipado = Table.TransformColumnTypes(OrdemDex, {
+        {"PokemonId", Int64.Type}, {"Slug", type text}, {"SpeciesId", Int64.Type}, {"IsDefault", type logical},
+        {"FormaSlug", type text}, {"IsMega", type logical}, {"AlturaM", type number}, {"PesoKg", type number},
+        {"Tipo1", type text}, {"Tipo1Slug", type text}, {"Cor1", type text},
+        {"Tipo2", type text}, {"Tipo2Slug", type text}, {"Cor2", type text},
+        {"HP", Int64.Type}, {"Ataque", Int64.Type}, {"Defesa", Int64.Type},
+        {"AtqEsp", Int64.Type}, {"DefEsp", Int64.Type}, {"Velocidade", Int64.Type},
+        {"SlugEspecie", type text}, {"NomeEspecie", type text}, {"Categoria", type text}, {"Descricao", type text},
+        {"Geracao", Int64.Type}, {"ChainId", Int64.Type}, {"EvoluiDe", Int64.Type}, {"NivelEvolucao", Int64.Type},
+        {"Lendario", type logical}, {"Mitico", type logical}, {"Estagio", Int64.Type}, {"EstagiosCadeia", Int64.Type}
+    }),
+    Ordenado = Table.Sort(Tipado, {{"OrdemDex", Order.Ascending}})
+in
+    Ordenado

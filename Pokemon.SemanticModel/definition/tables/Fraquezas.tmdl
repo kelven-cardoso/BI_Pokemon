@@ -1,0 +1,62 @@
+table Fraquezas
+
+	column PokemonId
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: PokemonId
+
+	column TipoAtaque
+		dataType: string
+		summarizeBy: none
+		sourceColumn: TipoAtaque
+
+	column TipoAtaqueSlug
+		dataType: string
+		summarizeBy: none
+		sourceColumn: TipoAtaqueSlug
+
+	column OrdemTipo
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: OrdemTipo
+
+	column Multiplicador
+		dataType: double
+		summarizeBy: none
+		sourceColumn: Multiplicador
+
+	partition Fraquezas = m
+		mode: import
+		source =
+				// Multiplicador de dano recebido por tipo de ataque (só os diferentes de 1x).
+				let
+				    SlugPorId = Record.FromList(Tipos[TipoSlug], List.Transform(Tipos[TipoId], Text.From)),
+				    Eficacia = Record.FromList(
+				        List.Transform(PokeRaw[e], each [damage_factor] / 100),
+				        List.Transform(PokeRaw[e], each
+				            Record.Field(SlugPorId, Text.From([damage_type_id])) & "_" & Record.Field(SlugPorId, Text.From([target_type_id])))
+				    ),
+				    Base = Table.SelectColumns(Pokemon, {"PokemonId", "Tipo1Slug", "Tipo2Slug"}),
+				    Ataques = Table.RenameColumns(
+				        Table.SelectColumns(Tipos, {"TipoSlug", "Tipo", "Ordem"}),
+				        {{"TipoSlug", "TipoAtaqueSlug"}, {"Tipo", "TipoAtaque"}, {"Ordem", "OrdemTipo"}}
+				    ),
+				    Cruzado = Table.ExpandTableColumn(
+				        Table.AddColumn(Base, "atk", each Ataques),
+				        "atk", {"TipoAtaqueSlug", "TipoAtaque", "OrdemTipo"}
+				    ),
+				    Multiplicador = Table.AddColumn(Cruzado, "Multiplicador", each
+				        Record.Field(Eficacia, [TipoAtaqueSlug] & "_" & [Tipo1Slug])
+				        * (if [Tipo2Slug] = null then 1 else Record.Field(Eficacia, [TipoAtaqueSlug] & "_" & [Tipo2Slug])),
+				        type number),
+				    SemNeutros = Table.SelectRows(Multiplicador, each [Multiplicador] <> 1),
+				    Final = Table.SelectColumns(SemNeutros, {"PokemonId", "TipoAtaque", "TipoAtaqueSlug", "OrdemTipo", "Multiplicador"}),
+				    Tipado = Table.TransformColumnTypes(Final, {
+				        {"PokemonId", Int64.Type}, {"TipoAtaque", type text}, {"TipoAtaqueSlug", type text},
+				        {"OrdemTipo", Int64.Type}, {"Multiplicador", type number}
+				    })
+				in
+				    Tipado
+

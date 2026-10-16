@@ -1,0 +1,35 @@
+let
+    Fonte = Table.FromRecords(PokeRaw[t]),
+    Traducao = #table(
+        type table [TipoSlug = text, Tipo = text, Cor = text, Ordem = Int64.Type],
+        {
+            {"normal", "Normal", "#A8A878", 1},
+            {"fire", "Fogo", "#F08030", 2},
+            {"water", "Água", "#6890F0", 3},
+            {"grass", "Planta", "#78C850", 4},
+            {"electric", "Elétrico", "#F8D030", 5},
+            {"ice", "Gelo", "#98D8D8", 6},
+            {"fighting", "Lutador", "#C03028", 7},
+            {"poison", "Venenoso", "#A040A0", 8},
+            {"ground", "Terrestre", "#E0C068", 9},
+            {"flying", "Voador", "#A890F0", 10},
+            {"psychic", "Psíquico", "#F85888", 11},
+            {"bug", "Inseto", "#A8B820", 12},
+            {"rock", "Pedra", "#B8A038", 13},
+            {"ghost", "Fantasma", "#705898", 14},
+            {"dragon", "Dragão", "#7038F8", 15},
+            {"dark", "Sombrio", "#705848", 16},
+            {"steel", "Aço", "#B8B8D0", 17},
+            {"fairy", "Fada", "#EE99AC", 18}
+        }
+    ),
+    Renomeado = Table.RenameColumns(Fonte, {{"id", "TipoId"}, {"name", "TipoSlug"}}),
+    Juntado = Table.NestedJoin(Renomeado, {"TipoSlug"}, Traducao, {"TipoSlug"}, "tr", JoinKind.Inner),
+    Expandido = Table.ExpandTableColumn(Juntado, "tr", {"Tipo", "Cor", "Ordem"}),
+    Tipado = Table.TransformColumnTypes(
+        Expandido,
+        {{"TipoId", Int64.Type}, {"TipoSlug", type text}, {"Tipo", type text}, {"Cor", type text}, {"Ordem", Int64.Type}}
+    ),
+    Ordenado = Table.Sort(Tipado, {{"Ordem", Order.Ascending}})
+in
+    Ordenado

@@ -1,0 +1,63 @@
+table FormaSel
+
+	column PokemonId
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: PokemonId
+
+	column SpeciesId
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: SpeciesId
+
+	column ChainId
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: ChainId
+
+	column Forma
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Forma
+
+	column Nome
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Nome
+
+	column Tipo1Slug
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Tipo1Slug
+
+	column ImgGif
+		dataType: string
+		dataCategory: ImageUrl
+		summarizeBy: none
+		sourceColumn: ImgGif
+
+	column ImgGifShiny
+		dataType: string
+		dataCategory: ImageUrl
+		summarizeBy: none
+		sourceColumn: ImgGifShiny
+
+	column OrdemDex
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: OrdemDex
+
+	partition FormaSel = m
+		mode: import
+		source =
+				// Cópia desconectada usada pelo visual de Formas (mesma ideia da EvoSel).
+				let
+				    Base = Table.SelectColumns(Pokemon,
+				        {"PokemonId", "SpeciesId", "ChainId", "Forma", "Nome", "Tipo1Slug", "ImgGif", "ImgGifShiny", "OrdemDex"})
+				in
+				    Base
+

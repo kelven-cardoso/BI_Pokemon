@@ -1,0 +1,686 @@
+-- Formato: cada medida começa com a linha
+--   -- @measure <nome> | <pasta>
+-- e vai até a próxima. O build.py grava tudo em _Medidas.tmdl.
+-- A medida '<CSS> Tipos' (cores por tipo) é gerada pelo build.py a partir de Tipos.m.
+--
+-- Seleção do Pokémon exibido (prioridade):
+--   1. clique no visual de Formas    (tabela desconectada FormaSel)
+--   2. clique no visual de Evolução  (tabela desconectada EvoSel)
+--   3. item escolhido na lista (segmentador de botões em Pokemon[Nome])
+--   4. primeiro Pokémon do filtro atual
+-- Os cliques só valem se forem da mesma cadeia evolutiva do item da lista.
+-- Modo (segmentador desconectado Modo): 1 Normal, 2 Shiny, 3 Cartas.
+
+-- @measure Id Lista | Base
+VAR _sel      = SELECTEDVALUE(Pokemon[PokemonId])
+VAR _primeiro = MIN(Pokemon[PokemonId])
+RETURN
+    IF(ISBLANK(_sel), _primeiro, _sel)
+
+-- @measure Cadeia Lista | Base
+VAR _id = [Id Lista]
+RETURN
+    MAXX(FILTER(ALL(Pokemon), Pokemon[PokemonId] = _id), Pokemon[ChainId])
+
+-- @measure Id Evolução Clicada | Base
+VAR _filtrado    = ISFILTERED(EvoSel)
+VAR _clicado     = IF(_filtrado && HASONEVALUE(EvoSel[PokemonId]), VALUES(EvoSel[PokemonId]))
+VAR _cadeia      = MAXX(FILTER(ALL(EvoSel), EvoSel[PokemonId] = _clicado), EvoSel[ChainId])
+VAR _cadeiaLista = [Cadeia Lista]
+RETURN
+    IF(NOT ISBLANK(_clicado) && _cadeia = _cadeiaLista, _clicado)
+
+-- @measure Id Forma Clicada | Base
+VAR _filtrado    = ISFILTERED(FormaSel)
+VAR _clicado     = IF(_filtrado && HASONEVALUE(FormaSel[PokemonId]), VALUES(FormaSel[PokemonId]))
+VAR _cadeia      = MAXX(FILTER(ALL(FormaSel), FormaSel[PokemonId] = _clicado), FormaSel[ChainId])
+VAR _cadeiaLista = [Cadeia Lista]
+RETURN
+    IF(NOT ISBLANK(_clicado) && _cadeia = _cadeiaLista, _clicado)
+
+-- @measure Id Selecionado | Base
+VAR _forma = [Id Forma Clicada]
+VAR _evo   = [Id Evolução Clicada]
+VAR _lista = [Id Lista]
+RETURN
+    COALESCE(_forma, _evo, _lista)
+
+-- @measure Modo Atual | Base
+SELECTEDVALUE(Modo[Ordem], 1)
+
+-- @measure Qtd Pokémon | Base
+CALCULATE(COUNTROWS(Pokemon), REMOVEFILTERS(Pokemon[Nome]))
+
+-- @measure <CSS> Base | <HTML>\CSS
+[<CSS> Tipos] & "
+#htmlContent { margin: 0; padding: 0; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: #E9ECF2; }
+.pn { position: relative; box-sizing: border-box; height: 100vh; padding: 14px 16px; border-radius: 18px; background: linear-gradient(160deg, rgba(30,36,48,.90), rgba(14,17,24,.92)); border: 1px solid rgba(255,255,255,.07); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 18px 40px rgba(0,0,0,.35); display: flex; flex-direction: column; overflow: hidden; }
+.pn-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex: 0 0 auto; }
+.pn-ico { width: 9px; height: 9px; border-radius: 50%; }
+.pn-tit { font-size: 11px; font-weight: 800; letter-spacing: .18em; color: #fff; }
+.pn-sub { margin-left: auto; font-size: 10px; font-weight: 600; color: #737C8C; }
+.pn-total { margin-left: auto; font-size: 9px; font-weight: 800; letter-spacing: .14em; color: #8A93A3; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10); padding: 4px 12px; border-radius: 999px; }
+.pn-total b { font-size: 14px; color: #fff; margin-left: 6px; letter-spacing: 0; }
+"
+
+-- @measure <HTML> Fundo | <HTML>
+VAR _id      = [Id Selecionado]
+VAR _modo    = [Modo Atual]
+VAR _linha   = FILTER(ALL(Pokemon), Pokemon[PokemonId] = _id)
+VAR _slug1   = MAXX(_linha, Pokemon[Tipo1Slug])
+VAR _slug2   = MAXX(_linha, Pokemon[Tipo2Slug])
+VAR _especie = MAXX(_linha, Pokemon[SpeciesId])
+VAR _slugB   = IF(ISBLANK(_slug2), _slug1, _slug2)
+VAR _numFmt  = IF(ISBLANK(_especie), "", FORMAT(_especie, "000"))
+-- partículas: posição, tamanho e tempo pseudoaleatórios (determinísticos)
+VAR _camada1 = CONCATENATEX(
+                  GENERATESERIES(1, 22, 1),
+                  VAR _i   = [Value]
+                  VAR _x   = MOD(_i * 37 + 11, 100)
+                  VAR _y   = MOD(_i * 53 + 7, 100)
+                  VAR _tam = 4 + MOD(_i * 7, 10)
+                  VAR _dur = 5 + MOD(_i * 13, 60) / 10
+                  VAR _atr = MOD(_i * 29, 80) / 10
+                  RETURN
+                      "<i style='left:" & _x & "%;top:" & _y & "%;width:" & _tam & "px;height:" & _tam
+                    & "px;animation-duration:" & FORMAT(_dur, "0.0", "en-US") & "s;animation-delay:-" & FORMAT(_atr, "0.0", "en-US") & "s'></i>",
+                  ""
+               )
+VAR _camada2 = CONCATENATEX(
+                  GENERATESERIES(1, 10, 1),
+                  VAR _i   = [Value]
+                  VAR _x   = MOD(_i * 41 + 23, 100)
+                  VAR _y   = MOD(_i * 67 + 31, 100)
+                  VAR _tam = 4 + MOD(_i * 5, 8)
+                  VAR _dur = 6 + MOD(_i * 17, 50) / 10
+                  VAR _atr = MOD(_i * 31, 70) / 10
+                  RETURN
+                      "<i style='left:" & _x & "%;top:" & _y & "%;width:" & _tam & "px;height:" & _tam
+                    & "px;animation-duration:" & FORMAT(_dur, "0.0", "en-US") & "s;animation-delay:-" & FORMAT(_atr, "0.0", "en-US") & "s'></i>",
+                  ""
+               )
+VAR _camadaShiny = IF(_modo = 2, "<div class='fx fx-shiny'>" & _camada2 & _camada2 & "</div>", "")
+VAR _htmlCamada2 = IF(ISBLANK(_slug2), "", "<div class='fx fx2 fx-" & _slug2 & "'>" & _camada2 & "</div>")
+RETURN
+    "<div class='bg'>"
+  & "<div class='bg-g1 gl-" & _slug1 & "'></div>"
+  & "<div class='bg-g2 gl-" & _slugB & "'></div>"
+  & "<div class='bg-dots'></div>"
+  & "<div class='bg-ball'><i></i></div>"
+  & "<div class='bg-num'>" & _numFmt & "</div>"
+  & "<div class='fx fx-" & _slug1 & "'>" & _camada1 & "</div>"
+  & _htmlCamada2 & _camadaShiny
+  & "</div>"
+
+-- @measure <CSS> Fundo | <HTML>\CSS
+[<CSS> Tipos] & "
+#htmlContent { margin: 0; padding: 0; height: 100vh; overflow: hidden; }
+.htmlViewerEntry { height: 100vh; }
+.bg { position: relative; width: 100%; height: 100vh; overflow: hidden; background: linear-gradient(180deg, #0E121A 0%, #08090D 100%); }
+.bg-g1 { position: absolute; width: 1000px; height: 1000px; left: 100px; top: -270px; opacity: .80; }
+.bg-g2 { position: absolute; width: 820px; height: 820px; left: 720px; top: 280px; opacity: .40; }
+.bg-dots { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.08) 1px, transparent 1.4px); background-size: 22px 22px; -webkit-mask-image: radial-gradient(circle at 47% 38%, #000 0%, rgba(0,0,0,.25) 45%, transparent 75%); }
+.bg-ball { position: absolute; width: 540px; height: 540px; left: 330px; top: -30px; border-radius: 50%; border: 2px solid rgba(255,255,255,.05); animation: gira 90s linear infinite; }
+.bg-ball::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: rgba(255,255,255,.05); }
+.bg-ball i { position: absolute; width: 120px; height: 120px; left: 50%; top: 50%; transform: translate(-50%, -50%); border-radius: 50%; border: 2px solid rgba(255,255,255,.05); }
+.bg-num { position: absolute; left: 352px; bottom: 210px; font-size: 230px; font-weight: 900; line-height: 1; letter-spacing: -.04em; color: transparent; -webkit-text-stroke: 2px rgba(255,255,255,.045); }
+@keyframes gira { to { transform: rotate(360deg); } }
+
+/* ---------- partículas por tipo ---------- */
+.fx { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.fx i { position: absolute; display: block; opacity: 0; animation-iteration-count: infinite; animation-timing-function: linear; }
+.fx2 i { animation-duration: 9s; }
+
+/* sobem: água, veneno, normal */
+.fx-water i, .fx-poison i, .fx-normal i { top: auto !important; bottom: -30px; border-radius: 50%; animation-name: bolha; animation-timing-function: ease-in-out; }
+.fx-water i { border: 1.5px solid rgba(190,215,255,.60); background: radial-gradient(circle at 32% 30%, rgba(255,255,255,.70) 0 12%, rgba(120,160,255,.12) 40%, rgba(104,144,240,.05) 70%); transform-origin: center; }
+.fx-poison i { border: 1.5px solid rgba(220,150,230,.55); background: radial-gradient(circle at 32% 30%, rgba(255,255,255,.55) 0 12%, rgba(160,64,160,.30) 45%, rgba(160,64,160,.08) 70%); }
+.fx-normal i { background: rgba(255,255,255,.22); }
+@keyframes bolha { 0% { transform: translate(0,0) scale(.7); opacity: 0; } 10% { opacity: .9; } 50% { transform: translate(18px,-380px) scale(1.2); } 90% { opacity: .8; } 100% { transform: translate(-10px,-780px) scale(1.5); opacity: 0; } }
+
+/* fogo: brasas + calor na base */
+.fx-fire i { top: auto !important; bottom: -10px; width: 4px !important; height: 4px !important; border-radius: 50%; background: #FFD27A; box-shadow: 0 0 6px 2px rgba(255,140,40,.85), 0 0 14px 4px rgba(255,80,20,.35); animation-name: brasa; animation-timing-function: ease-out; }
+.fx-fire::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 240px; background: linear-gradient(0deg, rgba(240,128,48,.20), transparent); animation: calor 2.6s ease-in-out infinite alternate; }
+@keyframes brasa { 0% { transform: translate(0,0) scale(1); opacity: 0; } 8% { opacity: 1; } 30% { transform: translate(-14px,-200px) scale(.9); } 60% { transform: translate(16px,-420px) scale(.7); opacity: .9; } 100% { transform: translate(-6px,-680px) scale(.2); opacity: 0; } }
+@keyframes calor { from { opacity: .55; } to { opacity: 1; } }
+
+/* elétrico: raios piscando + clarão */
+.fx-electric i { width: 18px !important; height: 50px !important; filter: drop-shadow(0 0 6px rgba(248,208,48,.95)); animation-name: raio; animation-timing-function: steps(1, end); }
+.fx-electric i::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, #FFFBD0, #F8D030); clip-path: polygon(55% 0, 18% 56%, 45% 56%, 28% 100%, 86% 40%, 58% 40%, 76% 0); }
+.fx-electric::before { content: ''; position: absolute; inset: 0; background: rgba(255,240,150,.10); opacity: 0; animation: clarao 5s steps(1, end) infinite; }
+@keyframes raio { 0%, 100% { opacity: 0; } 3% { opacity: 1; } 5% { opacity: .1; } 7% { opacity: 1; } 10% { opacity: 0; } }
+@keyframes clarao { 0%, 100% { opacity: 0; } 60% { opacity: 1; } 61% { opacity: 0; } 63% { opacity: .7; } 64% { opacity: 0; } }
+
+/* caem: planta (folhas), gelo (neve), pedra (fragmentos) */
+.fx-grass i, .fx-ice i, .fx-rock i { top: -30px !important; animation-timing-function: ease-in-out; }
+.fx-grass i { width: 10px !important; height: 16px !important; border-radius: 0 100% 0 100%; background: linear-gradient(135deg, #A8E68A, #4E9A2F); animation-name: folha; }
+.fx-ice i { border-radius: 50%; background: #fff; box-shadow: 0 0 8px rgba(200,240,255,.9); max-width: 8px; max-height: 8px; animation-name: neve; }
+.fx-rock i { background: #B8A038; clip-path: polygon(20% 0, 80% 10%, 100% 60%, 60% 100%, 0 70%); animation-name: pedra; animation-timing-function: cubic-bezier(.5,0,1,1); }
+@keyframes folha { 0% { transform: translate(0,0) rotate(0); opacity: 0; } 10% { opacity: .85; } 50% { transform: translate(-60px,380px) rotate(200deg); } 90% { opacity: .7; } 100% { transform: translate(40px,780px) rotate(420deg); opacity: 0; } }
+@keyframes neve { 0% { transform: translate(0,0); opacity: 0; } 10% { opacity: .9; } 50% { transform: translate(30px,380px); } 100% { transform: translate(-20px,780px); opacity: 0; } }
+@keyframes pedra { 0% { transform: translate(0,0) rotate(0); opacity: 0; } 5% { opacity: .8; } 100% { transform: translate(20px,780px) rotate(360deg); opacity: .5; } }
+
+/* fantasma: almas subindo */
+.fx-ghost i { top: auto !important; bottom: -60px; width: 46px !important; height: 46px !important; border-radius: 50%; background: radial-gradient(circle, rgba(170,140,230,.55), rgba(112,88,152,0) 70%); filter: blur(2px); animation-name: alma; animation-timing-function: ease-in-out; }
+@keyframes alma { 0% { transform: translate(0,0) scale(.6); opacity: 0; } 20% { opacity: .85; } 50% { transform: translate(40px,-360px) scale(1.2); } 80% { opacity: .5; } 100% { transform: translate(-30px,-760px) scale(.8); opacity: 0; } }
+
+/* psíquico e lutador: ondas de impacto */
+.fx-psychic i, .fx-fighting i { width: 30px !important; height: 30px !important; border-radius: 50%; border: 2px solid rgba(248,88,136,.70); animation-name: pulso; animation-timing-function: ease-out; }
+.fx-fighting i { border-color: rgba(255,120,60,.70); }
+@keyframes pulso { 0% { transform: scale(.2); opacity: 0; } 10% { opacity: .9; } 100% { transform: scale(4); opacity: 0; } }
+
+/* voador: vento | terrestre: poeira | sombrio: fumaça */
+.fx-flying i { width: 110px !important; height: 2px !important; border-radius: 2px; background: linear-gradient(90deg, transparent, rgba(225,225,255,.65), transparent); animation-name: vento; animation-timing-function: ease-in-out; }
+.fx-ground i { border-radius: 50%; background: rgba(224,192,104,.55); filter: blur(1px); animation-name: poeira; }
+.fx-dark i { width: 90px !important; height: 90px !important; border-radius: 50%; background: radial-gradient(circle, rgba(70,50,50,.60), transparent 70%); filter: blur(4px); animation-name: fumaca; animation-timing-function: ease-in-out; }
+@keyframes vento { 0% { transform: translateX(-300px); opacity: 0; } 20% { opacity: .8; } 100% { transform: translateX(500px); opacity: 0; } }
+@keyframes poeira { 0% { transform: translate(-40px,0); opacity: 0; } 20% { opacity: .7; } 100% { transform: translate(260px,-60px); opacity: 0; } }
+@keyframes fumaca { 0% { transform: translate(0,0) scale(.6); opacity: 0; } 30% { opacity: .7; } 100% { transform: translate(120px,-140px) scale(1.6); opacity: 0; } }
+
+/* brilhos: fada, dragão, aço, shiny | inseto: vagalumes */
+.fx-fairy i, .fx-dragon i, .fx-steel i, .fx-shiny i { width: 12px !important; height: 12px !important; clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%); animation-name: brilho; animation-timing-function: ease-in-out; }
+.fx-fairy i { background: #FFD6E8; }
+.fx-dragon i { background: #B9A2FF; }
+.fx-steel i { background: #EEF3FA; }
+.fx-shiny i { background: #FFE58A; width: 16px !important; height: 16px !important; }
+.fx-bug i { width: 5px !important; height: 5px !important; border-radius: 50%; background: #E6F57A; box-shadow: 0 0 10px 3px rgba(200,230,80,.70); animation-name: vagalume; animation-timing-function: ease-in-out; }
+@keyframes brilho { 0%, 100% { transform: scale(0) rotate(0); opacity: 0; } 50% { transform: scale(1.4) rotate(90deg); opacity: 1; } }
+@keyframes vagalume { 0% { transform: translate(0,0); opacity: 0; } 25% { transform: translate(30px,-20px); opacity: 1; } 50% { transform: translate(-10px,-50px); opacity: .3; } 75% { transform: translate(-40px,-10px); opacity: 1; } 100% { transform: translate(0,0); opacity: 0; } }
+"
+
+-- @measure <HTML> Marca | <HTML>
+VAR _qtd    = [Qtd Pokémon]
+VAR _qtdFmt = IF(ISBLANK(_qtd), "0", FORMAT(_qtd, "#,##0", "pt-BR"))
+VAR _rotulo = IF(_qtd = 1, " Pokémon encontrado", " Pokémon encontrados")
+RETURN
+    "<div class='mk'><div class='mk-ball'></div>"
+  & "<div class='mk-txt'><b>POKÉDEX</b><span>" & _qtdFmt & _rotulo & "</span></div></div>"
+
+-- @measure <CSS> Marca | <HTML>\CSS
+"
+#htmlContent { margin: 0; padding: 0; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+.htmlViewerEntry { height: 100vh; }
+.mk { display: flex; align-items: center; gap: 12px; height: 100vh; padding: 0 4px; }
+.mk-ball { position: relative; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(#E3350D 0 46%, #15171C 46% 56%, #F2F2F2 56%); border: 2px solid #15171C; box-shadow: 0 0 20px rgba(227,53,13,.45); animation: balanca 3.5s ease-in-out infinite; }
+.mk-ball::after { content: ''; position: absolute; width: 9px; height: 9px; left: 50%; top: 50%; transform: translate(-50%, -50%); border-radius: 50%; background: #F2F2F2; border: 2px solid #15171C; }
+.mk-txt b { display: block; font-size: 20px; font-weight: 900; letter-spacing: .20em; color: #fff; line-height: 1.1; }
+.mk-txt span { font-size: 11px; font-weight: 600; color: #8A93A3; }
+@keyframes balanca { 0%, 70%, 100% { transform: rotate(0); } 75% { transform: rotate(-14deg); } 80% { transform: rotate(12deg); } 85% { transform: rotate(-8deg); } 90% { transform: rotate(4deg); } }
+"
+
+-- @measure <HTML> Hero | <HTML>
+VAR _id        = [Id Selecionado]
+VAR _idLista   = [Id Lista]
+VAR _idEvo     = [Id Evolução Clicada]
+VAR _idForma   = [Id Forma Clicada]
+VAR _modo      = [Modo Atual]
+VAR _linha     = FILTER(ALL(Pokemon), Pokemon[PokemonId] = _id)
+VAR _linhaAnt  = FILTER(ALL(Pokemon), Pokemon[PokemonId] = _idLista)
+VAR _nome      = MAXX(_linha, Pokemon[Nome])
+VAR _nomeEsp   = MAXX(_linha, Pokemon[NomeEspecie])
+VAR _especie   = MAXX(_linha, Pokemon[SpeciesId])
+VAR _tipo1     = MAXX(_linha, Pokemon[Tipo1])
+VAR _tipo2     = MAXX(_linha, Pokemon[Tipo2])
+VAR _slug1     = MAXX(_linha, Pokemon[Tipo1Slug])
+VAR _slug2     = MAXX(_linha, Pokemon[Tipo2Slug])
+VAR _img       = IF(_modo = 2, MAXX(_linha, Pokemon[ImgArteShiny]), MAXX(_linha, Pokemon[ImgArte]))
+VAR _imgAnt    = IF(_modo = 2, MAXX(_linhaAnt, Pokemon[ImgArteShiny]), MAXX(_linhaAnt, Pokemon[ImgArte]))
+VAR _nomeAnt   = MAXX(_linhaAnt, Pokemon[NomeEspecie])
+VAR _categoria = MAXX(_linha, Pokemon[Categoria])
+VAR _altura    = MAXX(_linha, Pokemon[AlturaM])
+VAR _peso      = MAXX(_linha, Pokemon[PesoKg])
+VAR _total     = MAXX(_linha, Pokemon[Total])
+VAR _geracao   = MAXX(_linha, Pokemon[GeracaoLabel])
+VAR _estagio   = MAXX(_linha, Pokemon[Estagio])
+VAR _estagios  = MAXX(_linha, Pokemon[EstagiosCadeia])
+VAR _estagioAnt = MAXX(_linhaAnt, Pokemon[Estagio])
+VAR _raridade  = MAXX(_linha, Pokemon[Raridade])
+VAR _tagCarta  = MAXX(_linha, Pokemon[TagCarta])
+-- cartas TCG da espécie (preferindo as da forma exibida: Mega, Gigantamax, Alola...)
+VAR _cartasEsp = FILTER(ALL(Cartas), Cartas[SpeciesId] = _especie)
+VAR _temForma  = NOT ISEMPTY(FILTER(_cartasEsp, Cartas[TagForma] = _tagCarta))
+VAR _cartas    = FILTER(_cartasEsp, NOT _temForma || Cartas[TagForma] = _tagCarta)
+VAR _qtdCartas = COUNTROWS(_cartas) + 0
+VAR _topo      = TOPN(1, _cartas, Cartas[RaridadeOrdem], ASC, Cartas[Lancamento], DESC, Cartas[CartaId], ASC)
+VAR _topoImg   = MAXX(_topo, Cartas[ImgCarta])
+VAR _topoRar   = MAXX(_topo, Cartas[RaridadePT])
+VAR _topoCol   = MAXX(_topo, Cartas[Colecao] & " · " & YEAR(Cartas[Lancamento]))
+VAR _itensCartas = CONCATENATEX(
+                      _cartas,
+                      "<div class='cg-item'><img class='cg-thumb' loading='lazy' src='" & Cartas[ImgCarta] & "'/>"
+                    & "<div class='cg-prev'><div class='holo'><img src='" & Cartas[ImgCarta] & "'/></div>"
+                    & "<span><b>" & Cartas[RaridadePT] & "</b>" & Cartas[Colecao] & " · " & YEAR(Cartas[Lancamento]) & "</span></div></div>",
+                      "", Cartas[RaridadeOrdem], ASC, Cartas[Lancamento], DESC, Cartas[CartaId], ASC
+                   )
+-- textos e classes
+VAR _numFmt    = IF(ISBLANK(_especie), "", "#" & FORMAT(_especie, "000"))
+VAR _alturaFmt = IF(ISBLANK(_altura), "—", FORMAT(_altura, "0.0", "pt-BR") & " m")
+VAR _pesoFmt   = IF(ISBLANK(_peso), "—", FORMAT(_peso, "#,##0.0", "pt-BR") & " kg")
+VAR _totalFmt  = IF(ISBLANK(_total), "—", FORMAT(_total, "0"))
+VAR _estagioTx = IF(ISBLANK(_estagio), "—", "Estágio " & _estagio & "/" & _estagios)
+VAR _classeRar = SWITCH(_raridade, "Lendário", " rar-lendario", "Mítico", " rar-mitico", "")
+VAR _tamNome   = LEN(_nome)
+VAR _classeNome = IF(_tamNome > 18, " hn-p", IF(_tamNome > 12, " hn-m", ""))
+VAR _evoluiu   = NOT ISBLANK(_idEvo) && ISBLANK(_idForma) && _estagio > _estagioAnt
+VAR _classeHero = IF(_evoluiu, " evo", "") & IF(_modo = 2, " shiny", "")
+VAR _pillShiny = IF(_modo = 2, "<span class='pill pill-shiny'>✨ SHINY</span>", "")
+VAR _catHtml   = IF(ISBLANK(_categoria), "", "<div class='hero-cat'>" & _categoria & "</div>")
+VAR _badge1    = "<span class='tp bg-" & _slug1 & " sh-" & _slug1 & "'>" & UPPER(_tipo1) & "</span>"
+VAR _badge2    = IF(ISBLANK(_tipo2), "", "<span class='tp bg-" & _slug2 & " sh-" & _slug2 & "'>" & UPPER(_tipo2) & "</span>")
+VAR _brilhos   = IF(
+                    _modo = 2,
+                    "<div class='brilhos'>"
+                  & "<i style='left:22%;top:18%;animation-delay:0s'></i><i style='left:74%;top:24%;animation-delay:.6s'></i>"
+                  & "<i style='left:30%;top:72%;animation-delay:1.1s'></i><i style='left:68%;top:66%;animation-delay:.3s'></i>"
+                  & "<i style='left:50%;top:8%;animation-delay:1.5s'></i><i style='left:84%;top:48%;animation-delay:.9s'></i>"
+                  & "<i style='left:14%;top:46%;animation-delay:1.8s'></i><i style='left:58%;top:84%;animation-delay:.4s'></i>"
+                  & "</div>",
+                    ""
+                 )
+VAR _evoAntes  = IF(_evoluiu, "<div class='evo-raios'></div><img class='evo-antes' src='" & _imgAnt & "'/>", "")
+VAR _evoDepois = IF(_evoluiu, "<div class='evo-flash'></div><div class='evo-msg'>" & _nomeAnt & " evoluiu para " & _nomeEsp & "!</div>", "")
+VAR _palco     = "<div class='hero-palco'>"
+               & "<div class='hero-glow gl-" & _slug1 & "'></div>"
+               & "<div class='hero-anel bc-" & _slug1 & "'></div>"
+               & _evoAntes
+               & "<img class='hero-img' src='" & _img & "'/>"
+               & "<div class='hero-chao'></div>" & _brilhos & _evoDepois
+               & "</div>"
+               & "<div class='hero-tipos'>" & _badge1 & _badge2 & "</div>"
+               & "<div class='hero-fatos'>"
+               & "<div class='fato'><span>ALTURA</span><b>" & _alturaFmt & "</b></div>"
+               & "<div class='fato'><span>PESO</span><b>" & _pesoFmt & "</b></div>"
+               & "<div class='fato'><span>TOTAL BASE</span><b>" & _totalFmt & "</b></div>"
+               & "</div>"
+VAR _galeria   = "<div class='cg-head'>CARTAS DE " & UPPER(_nomeEsp) & "<b>" & _qtdCartas & "</b></div>"
+               & IF(
+                     _qtdCartas = 0,
+                     "<div class='cg-vazio'>Nenhuma carta encontrada para este Pokémon.</div>",
+                     "<div class='cg'><div class='cg-lista'>" & _itensCartas & "</div>"
+                   & "<div class='cg-padrao'><div class='holo'><img src='" & _topoImg & "'/></div>"
+                   & "<span><b>" & _topoRar & "</b>" & _topoCol & "</span></div></div>"
+                 )
+RETURN
+    "<div class='hero" & _classeHero & "'>"
+  & "<div class='hero-top'><span class='hero-num'>" & _numFmt & "</span></div>"
+  & "<div class='hero-nome" & _classeNome & "'>" & _nome & "</div>"
+  & _catHtml
+  & "<div class='hero-pills'><span class='pill'>" & _geracao & "</span><span class='pill'>" & _estagioTx & "</span>"
+  & "<span class='pill" & _classeRar & "'>" & _raridade & "</span>" & _pillShiny & "</div>"
+  & IF(_modo = 3, _galeria, _palco)
+  & "</div>"
+
+-- @measure <CSS> Hero | <HTML>\CSS
+[<CSS> Tipos] & "
+#htmlContent { margin: 0; padding: 0; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: #E9ECF2; }
+.htmlViewerEntry { height: 100vh; }
+.hero { position: relative; height: 100vh; box-sizing: border-box; padding: 4px 8px; display: flex; flex-direction: column; align-items: center; }
+.hero-top { width: 100%; height: 30px; display: flex; align-items: center; }
+.hero-num { font-size: 24px; font-weight: 900; font-style: italic; color: rgba(255,255,255,.50); }
+.hero-pills { display: flex; gap: 6px; margin-top: 6px; }
+.pill { font-size: 10px; font-weight: 700; color: #D5DAE3; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.10); padding: 3px 10px; border-radius: 999px; }
+.rar-lendario { color: #FFD86B; border-color: rgba(255,216,107,.55); background: rgba(255,216,107,.10); }
+.rar-mitico { color: #E7A8FF; border-color: rgba(231,168,255,.55); background: rgba(231,168,255,.10); }
+.pill-shiny { color: #FFE27A; border-color: rgba(255,226,122,.65); background: rgba(255,226,122,.14); }
+.hero-nome { margin-top: 0; font-size: 44px; font-weight: 900; line-height: 1.05; letter-spacing: -.01em; color: #fff; text-align: center; text-shadow: 0 6px 24px rgba(0,0,0,.45); }
+.hero-nome.hn-m { font-size: 36px; }
+.hero-nome.hn-p { font-size: 28px; }
+.shiny .hero-nome { background: linear-gradient(90deg, #fff 0%, #FFE58A 40%, #fff 60%, #FFE58A 100%); background-size: 200% 100%; -webkit-background-clip: text; color: transparent; animation: ouro 3s linear infinite; }
+.hero-cat { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #9AA3B2; }
+
+/* palco */
+.hero-palco { position: relative; width: 100%; flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.hero-glow { position: absolute; width: 360px; height: 360px; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.hero-anel { position: absolute; width: 226px; height: 226px; left: 50%; top: 50%; margin: -115px 0 0 -115px; border-radius: 50%; border: 2px dashed; opacity: .40; animation: gira 40s linear infinite; }
+.hero-img { position: relative; z-index: 2; height: 210px; max-width: 80%; object-fit: contain; filter: drop-shadow(0 18px 22px rgba(0,0,0,.55)); animation: flutua 4.5s ease-in-out infinite; cursor: pointer; }
+.hero-palco:hover .hero-img { animation: agita .55s ease-in-out infinite; }
+.hero-chao { position: absolute; bottom: 2px; left: 50%; width: 200px; height: 18px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(ellipse, rgba(0,0,0,.60), rgba(0,0,0,0) 70%); }
+.hero-tipos { display: flex; gap: 10px; margin: 6px 0 10px; }
+.tp { font-size: 12px; font-weight: 800; letter-spacing: .14em; color: #fff; padding: 6px 20px; border-radius: 999px; text-shadow: 0 1px 2px rgba(0,0,0,.40); }
+.hero-fatos { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.fato { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 7px 10px; text-align: center; }
+.fato span { display: block; font-size: 9px; font-weight: 800; letter-spacing: .16em; color: #8A93A3; }
+.fato b { font-size: 17px; font-weight: 800; color: #fff; }
+
+/* shiny */
+.brilhos { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+.brilhos i { position: absolute; width: 16px; height: 16px; background: #FFF1A8; clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%); animation: cintila 2.2s ease-in-out infinite; }
+
+/* evolução: silhuetas alternando, raios, clarão e mensagem */
+.evo-antes { position: absolute; z-index: 2; height: 210px; max-width: 80%; object-fit: contain; filter: brightness(0) invert(1) drop-shadow(0 0 16px rgba(255,255,255,.9)); animation: evo-antigo 3s ease-in-out 1 both; }
+.evo .hero-img { animation: evo-novo 3s ease-in-out 1 both, flutua 4.5s ease-in-out 3s infinite; }
+.evo .hero-palco:hover .hero-img { animation: agita .55s ease-in-out infinite; }
+.evo-raios { position: absolute; width: 440px; height: 440px; left: 50%; top: 50%; margin: -220px 0 0 -220px; border-radius: 50%; background: repeating-conic-gradient(rgba(255,255,255,.18) 0 6deg, transparent 6deg 22deg); -webkit-mask-image: radial-gradient(circle, #000 20%, transparent 70%); animation: raios 3s ease-in-out 1 both; }
+.evo-flash { position: absolute; z-index: 4; width: 320px; height: 320px; left: 50%; top: 50%; margin: -160px 0 0 -160px; border-radius: 50%; background: radial-gradient(circle, #fff 0%, rgba(255,255,255,.6) 35%, rgba(255,255,255,0) 70%); pointer-events: none; animation: flash 3s ease-out 1 both; }
+.evo-msg { position: absolute; z-index: 5; bottom: 6px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 12px; font-weight: 800; color: #fff; background: rgba(10,12,18,.80); border: 1px solid rgba(255,255,255,.18); padding: 6px 14px; border-radius: 999px; animation: msg 3s ease-out 1 both; }
+
+/* galeria de cartas */
+.cg-head { width: 100%; font-size: 11px; font-weight: 800; letter-spacing: .16em; color: #8A93A3; margin: 12px 0 8px; }
+.cg-head b { color: #fff; margin-left: 8px; }
+.cg { position: relative; width: 100%; flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 1fr 180px; gap: 14px; }
+.cg-lista { overflow-y: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; align-content: start; padding: 2px 6px 6px 2px; }
+.cg-lista::-webkit-scrollbar { width: 5px; }
+.cg-lista::-webkit-scrollbar-thumb { background: rgba(255,255,255,.20); border-radius: 5px; }
+.cg-thumb { display: block; width: 100%; border-radius: 5px; box-shadow: 0 4px 10px rgba(0,0,0,.45); transition: transform .15s, box-shadow .15s; cursor: pointer; }
+.cg-item:hover .cg-thumb { transform: translateY(-3px); box-shadow: 0 0 0 2px #FFCB05, 0 8px 16px rgba(0,0,0,.5); }
+.cg-prev, .cg-padrao { width: 180px; display: flex; flex-direction: column; gap: 8px; }
+.cg-prev { position: absolute; right: 0; top: 0; opacity: 0; pointer-events: none; transition: opacity .12s; }
+.cg-item:hover .cg-prev { opacity: 1; }
+.cg:has(.cg-item:hover) .cg-padrao { opacity: 0; }
+.holo { position: relative; border-radius: 9px; overflow: hidden; box-shadow: 0 14px 30px rgba(0,0,0,.6); }
+.holo img { display: block; width: 180px; }
+.holo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.35) 45%, rgba(255,140,255,.18) 50%, transparent 62%); background-size: 260% 100%; mix-blend-mode: screen; animation: holo 3.2s linear infinite; }
+.cg-prev span, .cg-padrao span { font-size: 10px; color: #A9B1BF; line-height: 1.4; }
+.cg-prev b, .cg-padrao b { display: block; font-size: 11px; color: #fff; }
+.cg-vazio { margin-top: 40px; font-size: 12px; color: #737C8C; }
+
+@keyframes gira { to { transform: rotate(360deg); } }
+@keyframes flutua { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@keyframes agita { 0%, 100% { transform: rotate(0) scale(1.04); } 25% { transform: rotate(-5deg) scale(1.06); } 75% { transform: rotate(5deg) scale(1.06); } }
+@keyframes ouro { to { background-position: -200% 0; } }
+@keyframes cintila { 0%, 100% { transform: scale(0) rotate(0); opacity: 0; } 50% { transform: scale(1.2) rotate(90deg); opacity: 1; } }
+@keyframes holo { from { background-position: 150% 0; } to { background-position: -110% 0; } }
+@keyframes evo-antigo { 0% { opacity: 1; } 12% { opacity: 1; } 13% { opacity: 0; } 22% { opacity: 0; } 23% { opacity: 1; } 30% { opacity: 1; } 31% { opacity: 0; } 38% { opacity: 0; } 39% { opacity: 1; } 44% { opacity: 1; } 45% { opacity: 0; } 50% { opacity: 0; } 51% { opacity: 1; } 54% { opacity: 1; } 55% { opacity: 0; } 58% { opacity: 0; } 59% { opacity: 1; } 60% { opacity: 1; } 61% { opacity: 0; } 100% { opacity: 0; } }
+@keyframes evo-novo {
+  0% { opacity: 0; transform: scale(1); filter: brightness(0) invert(1) drop-shadow(0 0 16px rgba(255,255,255,.9)); }
+  12% { opacity: 0; } 13% { opacity: 1; } 22% { opacity: 1; } 23% { opacity: 0; } 30% { opacity: 0; } 31% { opacity: 1; }
+  38% { opacity: 1; } 39% { opacity: 0; } 44% { opacity: 0; } 45% { opacity: 1; } 50% { opacity: 1; } 51% { opacity: 0; }
+  54% { opacity: 0; } 55% { opacity: 1; } 58% { opacity: 1; } 59% { opacity: 0; } 60% { opacity: 0; }
+  61% { opacity: 1; transform: scale(1); filter: brightness(0) invert(1) drop-shadow(0 0 16px rgba(255,255,255,.9)); }
+  70% { transform: scale(1.12); filter: brightness(0) invert(1) drop-shadow(0 0 34px rgba(255,255,255,1)); }
+  80% { transform: scale(1); filter: brightness(1.6) invert(0) drop-shadow(0 0 30px rgba(255,255,255,.9)); }
+  100% { opacity: 1; transform: scale(1); filter: brightness(1) invert(0) drop-shadow(0 18px 22px rgba(0,0,0,.55)); }
+}
+@keyframes raios { 0% { opacity: 0; transform: rotate(0); } 15% { opacity: 1; } 65% { opacity: 1; } 80% { opacity: 0; transform: rotate(120deg); } 100% { opacity: 0; transform: rotate(140deg); } }
+@keyframes flash { 0%, 62% { opacity: 0; transform: scale(.3); } 68% { opacity: .95; transform: scale(1.6); } 100% { opacity: 0; transform: scale(2.2); } }
+@keyframes msg { 0%, 75% { opacity: 0; transform: translate(-50%, 8px); } 88%, 100% { opacity: 1; transform: translate(-50%, 0); } }
+"
+
+-- @measure <HTML> Atributos | <HTML>
+VAR _id       = [Id Selecionado]
+VAR _linha    = FILTER(ALL(Pokemon), Pokemon[PokemonId] = _id)
+VAR _hp       = MAXX(_linha, Pokemon[HP])
+VAR _atk      = MAXX(_linha, Pokemon[Ataque])
+VAR _def      = MAXX(_linha, Pokemon[Defesa])
+VAR _atkEsp   = MAXX(_linha, Pokemon[AtqEsp])
+VAR _defEsp   = MAXX(_linha, Pokemon[DefEsp])
+VAR _vel      = MAXX(_linha, Pokemon[Velocidade])
+VAR _total    = MAXX(_linha, Pokemon[Total])
+VAR _slug     = MAXX(_linha, Pokemon[Tipo1Slug])
+VAR _cx       = 100
+VAR _cy       = 100
+VAR _r        = 62
+VAR _escala   = 200
+VAR _eixos    = SELECTCOLUMNS(
+                   { (0, "HP", _hp, 1), (1, "ATQ", _atk, 2), (2, "DEF", _def, 3),
+                     (3, "VEL", _vel, 6), (4, "A.ESP", _atkEsp, 4), (5, "D.ESP", _defEsp, 5) },
+                   "k", [Value1], "rotulo", [Value2], "valor", [Value3], "ordem", [Value4]
+                )
+VAR _vertices = SELECTCOLUMNS(GENERATESERIES(0, 5, 1), "k", [Value])
+VAR _niveis   = SELECTCOLUMNS({ 0.25, 0.5, 0.75, 1 }, "f", [Value])
+VAR _grade    = CONCATENATEX(
+                   _niveis,
+                   VAR _f = [f]
+                   RETURN
+                       "<polygon class='rd-grid' points='"
+                     & CONCATENATEX(
+                           _vertices,
+                           VAR _a = RADIANS(-90 + 60 * [k])
+                           RETURN FORMAT(_cx + _r * _f * COS(_a), "0.0", "en-US") & "," & FORMAT(_cy + _r * _f * SIN(_a), "0.0", "en-US"),
+                           " ", [k], ASC
+                       )
+                     & "'/>",
+                   ""
+                )
+VAR _linhasEixo = CONCATENATEX(
+                     _vertices,
+                     VAR _a = RADIANS(-90 + 60 * [k])
+                     RETURN
+                         "<line class='rd-ax' x1='" & _cx & "' y1='" & _cy
+                       & "' x2='" & FORMAT(_cx + _r * COS(_a), "0.0", "en-US")
+                       & "' y2='" & FORMAT(_cy + _r * SIN(_a), "0.0", "en-US") & "'/>",
+                     ""
+                  )
+VAR _pontos   = CONCATENATEX(
+                   _eixos,
+                   VAR _a  = RADIANS(-90 + 60 * [k])
+                   VAR _rv = _r * MIN(MAX(DIVIDE([valor], _escala), 0.06), 1)
+                   RETURN FORMAT(_cx + _rv * COS(_a), "0.0", "en-US") & "," & FORMAT(_cy + _rv * SIN(_a), "0.0", "en-US"),
+                   " ", [k], ASC
+                )
+VAR _bolinhas = CONCATENATEX(
+                   _eixos,
+                   VAR _a  = RADIANS(-90 + 60 * [k])
+                   VAR _rv = _r * MIN(MAX(DIVIDE([valor], _escala), 0.06), 1)
+                   RETURN
+                       "<circle class='rd-dot' r='3' cx='" & FORMAT(_cx + _rv * COS(_a), "0.0", "en-US")
+                     & "' cy='" & FORMAT(_cy + _rv * SIN(_a), "0.0", "en-US") & "'/>",
+                   ""
+                )
+VAR _rotulos  = CONCATENATEX(
+                   _eixos,
+                   VAR _a = RADIANS(-90 + 60 * [k])
+                   RETURN
+                       "<text class='rd-lb' text-anchor='middle' x='" & FORMAT(_cx + 84 * COS(_a), "0.0", "en-US")
+                     & "' y='" & FORMAT(_cy + 84 * SIN(_a) + 3, "0.0", "en-US") & "'>" & [rotulo] & "</text>",
+                   ""
+                )
+VAR _barras   = CONCATENATEX(
+                   _eixos,
+                   VAR _larg = FORMAT(MIN(DIVIDE([valor], _escala), 1) * 100, "0", "en-US")
+                   VAR _vf   = IF(ISBLANK([valor]), "—", FORMAT([valor], "0"))
+                   RETURN
+                       "<div class='br'><span class='br-l'>" & [rotulo] & "</span>"
+                     & "<div class='br-t'><div class='br-f bg-" & _slug & "' style='width:" & _larg & "%'></div></div>"
+                     & "<span class='br-v'>" & _vf & "</span></div>",
+                   "", [ordem], ASC
+                )
+VAR _totalFmt = IF(ISBLANK(_total), "—", FORMAT(_total, "0"))
+RETURN
+    "<div class='pn'>"
+  & "<div class='pn-head'><span class='pn-ico bg-" & _slug & " sh-" & _slug & "'></span><span class='pn-tit'>ATRIBUTOS</span>"
+  & "<span class='pn-total'>TOTAL <b>" & _totalFmt & "</b></span></div>"
+  & "<div class='at'>"
+  & "<svg class='rd' viewBox='0 0 200 200'>" & _grade & _linhasEixo
+  & "<polygon class='rd-poly fl-" & _slug & "' points='" & _pontos & "'/>" & _bolinhas & _rotulos & "</svg>"
+  & "<div class='bars'>" & _barras & "</div>"
+  & "</div></div>"
+
+-- @measure <CSS> Atributos | <HTML>\CSS
+[<CSS> Base] & "
+.htmlViewerEntry { height: 100vh; }
+.at { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 196px 1fr; gap: 14px; align-items: center; }
+.rd { width: 196px; height: 196px; overflow: visible; }
+.rd-grid { fill: none; stroke: rgba(255,255,255,.10); stroke-width: 1; }
+.rd-ax { stroke: rgba(255,255,255,.07); stroke-width: 1; }
+.rd-poly { fill-opacity: .38; stroke-width: 2.2; stroke-linejoin: round; }
+.rd-dot { fill: #fff; }
+.rd-lb { fill: #8A93A3; font-size: 9px; font-weight: 800; letter-spacing: .06em; font-family: 'Segoe UI', sans-serif; }
+.bars { display: flex; flex-direction: column; gap: 11px; }
+.br { display: grid; grid-template-columns: 40px 1fr 30px; align-items: center; gap: 8px; }
+.br-l { font-size: 9.5px; font-weight: 800; letter-spacing: .08em; color: #8A93A3; }
+.br-t { height: 7px; border-radius: 999px; background: rgba(255,255,255,.07); overflow: hidden; }
+.br-f { height: 100%; border-radius: 999px; animation: enche .8s ease-out 1 both; transform-origin: left; }
+.br-v { font-size: 12px; font-weight: 800; color: #fff; text-align: right; }
+@keyframes enche { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+"
+
+-- @measure <HTML> Fraquezas | <HTML>
+VAR _id       = [Id Selecionado]
+VAR _linha    = FILTER(ALL(Pokemon), Pokemon[PokemonId] = _id)
+VAR _slug     = MAXX(_linha, Pokemon[Tipo1Slug])
+VAR _todos    = FILTER(ALL(Fraquezas), Fraquezas[PokemonId] = _id)
+VAR _fracos   = FILTER(_todos, Fraquezas[Multiplicador] > 1)
+VAR _resiste  = FILTER(_todos, Fraquezas[Multiplicador] < 1)
+VAR _chipsFraco = CONCATENATEX(
+                     _fracos,
+                     "<span class='ch bg-" & Fraquezas[TipoAtaqueSlug] & IF(Fraquezas[Multiplicador] >= 4, " ch-x4", "") & "'>"
+                   & Fraquezas[TipoAtaque] & "<b>" & FORMAT(Fraquezas[Multiplicador], "0") & "×</b></span>",
+                     "", Fraquezas[Multiplicador], DESC, Fraquezas[OrdemTipo], ASC
+                  )
+VAR _chipsResiste = CONCATENATEX(
+                     _resiste,
+                     VAR _m   = Fraquezas[Multiplicador]
+                     VAR _rot = SWITCH(TRUE(), _m = 0, "0×", _m = 0.25, "¼×", "½×")
+                     RETURN
+                         "<span class='ch ch-res bg-" & Fraquezas[TipoAtaqueSlug] & IF(_m = 0, " ch-imune", "") & "'>"
+                       & Fraquezas[TipoAtaque] & "<b>" & _rot & "</b></span>",
+                     "", Fraquezas[Multiplicador], ASC, Fraquezas[OrdemTipo], ASC
+                  )
+VAR _qtdFraco = COUNTROWS(_fracos) + 0
+VAR _qtdRes   = COUNTROWS(_resiste) + 0
+VAR _htmlFraco = "<div class='fx-sec'>FRACO CONTRA <i>" & FORMAT(_qtdFraco, "0") & "</i></div>"
+               & IF(_chipsFraco = "", "<div class='fx-vazio'>Nenhuma fraqueza</div>", "<div class='fx-chips'>" & _chipsFraco & "</div>")
+VAR _htmlRes   = "<div class='fx-sec'>RESISTE OU É IMUNE <i>" & FORMAT(_qtdRes, "0") & "</i></div>"
+               & IF(_chipsResiste = "", "<div class='fx-vazio'>Nenhuma resistência</div>", "<div class='fx-chips'>" & _chipsResiste & "</div>")
+RETURN
+    "<div class='pn'>"
+  & "<div class='pn-head'><span class='pn-ico bg-" & _slug & " sh-" & _slug & "'></span><span class='pn-tit'>FRAQUEZAS E RESISTÊNCIAS</span>"
+  & "<span class='pn-sub'>dano recebido</span></div>"
+  & "<div class='fx'>" & _htmlFraco & _htmlRes & "</div>"
+  & "</div>"
+
+-- @measure <CSS> Fraquezas | <HTML>\CSS
+[<CSS> Base] & "
+.htmlViewerEntry { height: 100vh; }
+.fx { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.fx-sec { font-size: 9.5px; font-weight: 800; letter-spacing: .16em; color: #8A93A3; margin: 0 0 6px; }
+.fx-sec i { font-style: normal; color: #5C6575; margin-left: 4px; }
+.fx-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+.ch { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; color: #fff; padding: 2px 3px 2px 10px; border-radius: 999px; text-shadow: 0 1px 1px rgba(0,0,0,.35); }
+.ch b { font-size: 9px; font-weight: 900; background: rgba(0,0,0,.30); padding: 2px 6px; border-radius: 999px; }
+.ch-x4 { box-shadow: 0 0 0 2px #fff, 0 0 16px rgba(255,255,255,.35); }
+.ch-res { opacity: .78; }
+.ch-imune { opacity: 1; box-shadow: inset 0 0 0 2px rgba(0,0,0,.35); }
+.ch-imune b { background: #0B0E14; color: #9BE7A6; }
+.fx-vazio { font-size: 10px; color: #5C6575; margin-bottom: 10px; }
+"
+
+-- @measure <HTML> Evolução Moldura | <HTML>
+VAR _id   = [Id Selecionado]
+VAR _slug = MAXX(FILTER(ALL(Pokemon), Pokemon[PokemonId] = _id), Pokemon[Tipo1Slug])
+RETURN
+    "<div class='pn'>"
+  & "<div class='pn-head'><span class='pn-ico bg-" & _slug & " sh-" & _slug & "'></span><span class='pn-tit'>EVOLUÇÃO</span>"
+  & "<span class='pn-sub'>clique no próximo estágio para evoluir · de novo para voltar</span></div>"
+  & "</div>"
+
+-- @measure <HTML> Formas Moldura | <HTML>
+VAR _id      = [Id Selecionado]
+VAR _linha   = FILTER(ALL(Pokemon), Pokemon[PokemonId] = _id)
+VAR _slug    = MAXX(_linha, Pokemon[Tipo1Slug])
+VAR _especie = MAXX(_linha, Pokemon[SpeciesId])
+VAR _qtd     = COUNTROWS(FILTER(ALL(FormaSel), FormaSel[SpeciesId] = _especie))
+VAR _qtdFmt  = IF(ISBLANK(_qtd), "0", FORMAT(_qtd, "0"))
+RETURN
+    "<div class='pn'>"
+  & "<div class='pn-head'><span class='pn-ico bg-" & _slug & " sh-" & _slug & "'></span><span class='pn-tit'>FORMAS</span>"
+  & "<span class='pn-sub'>" & _qtdFmt & IF(_qtd = 1, " forma", " formas") & "</span></div>"
+  & "</div>"
+
+-- @measure <CSS> Moldura | <HTML>\CSS
+[<CSS> Base] & "
+.htmlViewerEntry { height: 100vh; }
+"
+
+-- @measure <HTML> Evolução Item | <HTML>
+VAR _ordem      = SELECTEDVALUE(EvoSel[OrdemEvo])
+VAR _rowCadeia  = SELECTEDVALUE(EvoSel[ChainId])
+VAR _rowPadrao  = SELECTEDVALUE(EvoSel[IsDefault])
+VAR _rowEstagio = SELECTEDVALUE(EvoSel[Estagio])
+VAR _rowEspecie = SELECTEDVALUE(EvoSel[SpeciesId])
+VAR _nome       = SELECTEDVALUE(EvoSel[NomeEspecie])
+VAR _modo       = [Modo Atual]
+VAR _img        = IF(_modo = 2, SELECTEDVALUE(EvoSel[ImgGifShiny]), SELECTEDVALUE(EvoSel[ImgGif]))
+VAR _nivel      = SELECTEDVALUE(EvoSel[NivelEvolucao])
+VAR _slug       = SELECTEDVALUE(EvoSel[Tipo1Slug])
+VAR _cadeia     = [Cadeia Lista]
+VAR _idBase     = COALESCE([Id Forma Clicada], [Id Lista])
+VAR _linhaBase  = FILTER(ALL(Pokemon), Pokemon[PokemonId] = _idBase)
+VAR _especieBase = MAXX(_linhaBase, Pokemon[SpeciesId])
+VAR _estagioBase = MAXX(_linhaBase, Pokemon[Estagio])
+VAR _membros    = FILTER(ALL(EvoSel), EvoSel[ChainId] = _cadeia && EvoSel[IsDefault])
+VAR _qtd        = COUNTROWS(_membros)
+VAR _primeiroEst = MINX(FILTER(_membros, EvoSel[Estagio] = _rowEstagio), EvoSel[OrdemEvo])
+VAR _mostra     = NOT ISBLANK(_ordem) && _rowCadeia = _cadeia && _rowPadrao = TRUE()
+VAR _seta       = IF(_rowEstagio > 1 && _ordem = _primeiroEst, "<span class='ev-seta'>›</span>", "")
+VAR _classeTam  = IF(_qtd > 4, " ev-p", "")
+VAR _classeAtual = IF(_rowEspecie = _especieBase, " ev-atual", "")
+VAR _proximo    = _rowEstagio = _estagioBase + 1
+VAR _seloEvo    = IF(_proximo, "<span class='ev-evoluir'>EVOLUIR ›</span>", "")
+VAR _nivelHtml  = IF(
+                     ISBLANK(_nivel),
+                     IF(_rowEstagio > 1, "<span class='ev-nv'>Especial</span>", "<span class='ev-nv ev-nv0'>Base</span>"),
+                     "<span class='ev-nv'>Nv. " & _nivel & "</span>"
+                  )
+RETURN
+    IF(
+        _mostra,
+        "<div class='ev" & _classeTam & _classeAtual & IF(_proximo, " ev-prox", "") & "'>" & _seta
+      & "<div class='ev-card'>" & _seloEvo & "<div class='ev-img gl-" & _slug & "'><img src='" & _img & "'/></div>"
+      & "<span class='ev-nome'>" & _nome & "</span>" & _nivelHtml & "</div></div>"
+    )
+
+-- @measure <CSS> Evolução Item | <HTML>\CSS
+[<CSS> Tipos] & "
+#htmlContent { margin: 0; padding: 0; height: 100vh; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; align-content: center; justify-content: center; gap: 2px; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+.htmlViewerEntry { flex: 0 0 auto; }
+.ev { display: flex; align-items: center; cursor: pointer; }
+.ev-seta { font-size: 34px; font-weight: 300; color: #5C6575; margin: 0 8px 22px; }
+.ev-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 10px 8px; border-radius: 16px; transition: background .15s, transform .15s; }
+.htmlViewerEntry:hover .ev-card { background: rgba(255,255,255,.06); transform: translateY(-2px); }
+.ev-img { width: 94px; height: 94px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.ev-img img { max-width: 84px; max-height: 84px; }
+.ev-nome { font-size: 12px; font-weight: 800; color: #E9ECF2; }
+.ev-nv { font-size: 9px; font-weight: 800; letter-spacing: .06em; color: #C9CFDA; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); padding: 1px 9px; border-radius: 999px; }
+.ev-nv0 { color: #737C8C; }
+.ev-atual .ev-card { background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,.20); }
+.ev-evoluir { position: absolute; top: -2px; right: -4px; z-index: 2; font-size: 8px; font-weight: 900; letter-spacing: .10em; color: #11151D; background: #FFCB05; padding: 2px 7px; border-radius: 999px; box-shadow: 0 0 12px rgba(255,203,5,.55); animation: chama 1.6s ease-in-out infinite; }
+.ev-prox .ev-img { animation: respira 1.6s ease-in-out infinite; }
+.ev-p .ev-seta { font-size: 22px; margin: 0 2px 14px; }
+.ev-p .ev-card { padding: 3px 4px 5px; }
+.ev-p .ev-img { width: 54px; height: 54px; }
+.ev-p .ev-img img { max-width: 48px; max-height: 48px; }
+.ev-p .ev-nome { font-size: 9.5px; }
+.ev-p .ev-nv { font-size: 8px; padding: 0 6px; }
+.ev-p .ev-evoluir { font-size: 6.5px; padding: 1px 5px; right: -6px; }
+.htmlViewerEntry.unselected .ev-card { opacity: .35; }
+#statusMessage div { display: none; }
+@keyframes chama { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@keyframes respira { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+"
+
+-- @measure <HTML> Formas Item | <HTML>
+VAR _rowId      = SELECTEDVALUE(FormaSel[PokemonId])
+VAR _rowEspecie = SELECTEDVALUE(FormaSel[SpeciesId])
+VAR _forma      = SELECTEDVALUE(FormaSel[Forma])
+VAR _modo       = [Modo Atual]
+VAR _img        = IF(_modo = 2, SELECTEDVALUE(FormaSel[ImgGifShiny]), SELECTEDVALUE(FormaSel[ImgGif]))
+VAR _slug       = SELECTEDVALUE(FormaSel[Tipo1Slug])
+VAR _idBase     = COALESCE([Id Evolução Clicada], [Id Lista])
+VAR _especieBase = MAXX(FILTER(ALL(Pokemon), Pokemon[PokemonId] = _idBase), Pokemon[SpeciesId])
+VAR _mostra     = NOT ISBLANK(_rowId) && _rowEspecie = _especieBase
+VAR _classeAtual = IF(_rowId = _idBase, " fm-atual", "")
+RETURN
+    IF(
+        _mostra,
+        "<div class='fm" & _classeAtual & "'><div class='fm-img gl-" & _slug & "'><img src='" & _img & "'/></div>"
+      & "<span>" & _forma & "</span></div>"
+    )
+
+-- @measure <CSS> Formas Item | <HTML>\CSS
+[<CSS> Tipos] & "
+#htmlContent { margin: 0; padding: 0 0 4px; height: 100vh; box-sizing: border-box; display: flex; align-items: center; gap: 6px; overflow-x: auto; overflow-y: hidden; font-family: 'Segoe UI', sans-serif; }
+#htmlContent::-webkit-scrollbar { height: 5px; }
+#htmlContent::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 5px; }
+.htmlViewerEntry { flex: 0 0 auto; }
+.fm { width: 86px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 2px 6px; border-radius: 14px; cursor: pointer; transition: background .15s, transform .15s; }
+.htmlViewerEntry:hover .fm { background: rgba(255,255,255,.06); transform: translateY(-2px); }
+.fm-img { width: 62px; height: 62px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.fm-img img { max-width: 56px; max-height: 56px; }
+.fm span { max-width: 82px; font-size: 10px; font-weight: 700; color: #C9CFDA; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fm-atual { background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,.20); }
+.fm-atual span { color: #fff; }
+.htmlViewerEntry.unselected .fm { opacity: .35; }
+#statusMessage div { display: none; }
+"

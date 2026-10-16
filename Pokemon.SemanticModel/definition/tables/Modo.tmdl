@@ -1,0 +1,26 @@
+table Modo
+
+	column Modo
+		dataType: string
+		sortByColumn: Ordem
+		summarizeBy: none
+		sourceColumn: Modo
+
+	column Ordem
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: Ordem
+
+	partition Modo = m
+		mode: import
+		source =
+				// Modo de exibição do destaque central (segmentador de botões desconectado).
+				let
+				    Fonte = #table(
+				        type table [Modo = text, Ordem = Int64.Type],
+				        {{"Normal", 1}, {"✨ Shiny", 2}, {"🃏 Cartas", 3}}
+				    )
+				in
+				    Fonte
+
