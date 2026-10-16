@@ -2,7 +2,7 @@
 .sf-dica { font-size: 10px; font-weight: 700; color: #8A93A3; }
 .sf-jogo { position: absolute; left: 16px; top: 60px; width: 960px; height: 640px; border-radius: 18px; overflow: hidden; border: 4px solid #1F2028; box-shadow: 0 0 0 3px #3A4A6B, 0 18px 40px rgba(0,0,0,.55); outline: none; background: #8CCF68; }
 .sf-jogo:focus { box-shadow: 0 0 0 3px #FFCB05, 0 18px 40px rgba(0,0,0,.55); }
-.sf-jogo canvas { display: block; width: 960px; height: 640px; image-rendering: pixelated; }
+#sf-canvas { display: block; width: 960px; height: 640px; image-rendering: pixelated; }
 .sf-nuvens { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .sf-nuvens i { position: absolute; width: 420px; height: 220px; border-radius: 50%; background: radial-gradient(ellipse, rgba(10,30,10,.16), transparent 70%); animation: sf-nuvem 38s linear infinite; }
 .sf-nuvens i:nth-child(1) { top: 40px; left: -440px; }
@@ -129,3 +129,6 @@
 .sf-tc { border-radius: 10px; background: #1A2030; border: 1px solid #283041; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #C9CFDA; cursor: pointer; user-select: none; }
 .sf-tc:hover { background: #252D40; color: #fff; } .sf-tc:active { background: #FFCB05; color: #11151D; }
 .vazio { font-size: 11px; color: #5C6575; grid-column: 1 / -1; }
+
+/* depois da entrada, redesenhar a cena (fruta, bola que falhou) não repete as animações */
+.sf-luta.fixo, .sf-luta.fixo .sf-mon:not(.suga):not(.escapa):not(.foge), .sf-luta.fixo .sf-tr:not(.joga) { animation: none; }

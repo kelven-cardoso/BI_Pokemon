@@ -3036,7 +3036,7 @@ table _Medidas
 			    if (S.anda || S.luta) { return; }
 			    S.dir = d;
 			    var nx = S.x + DIRS[d][0], ny = S.y + DIRS[d][1], ch = tile(nx, ny);
-			    if (ch === 'p') { mensagem('📜 <b>ZONA SAFARI</b> · O mato alto esconde Pokémon · O Centro Pokémon reabastece a mochila · Shiny: 1 em ' + SHINY + ' (até ' + MAX_SHINY + ') · Lendário: raro (até ' + MAX_LENDARIO + ')'); return; }
+			    if (ch === 'p') { mensagem('📜 <b>ZONA SAFARI</b> · O mato alto esconde Pokémon · O Centro Pokémon reabastece a mochila · Dizem que Pokémon brilhantes e até lendários aparecem por aqui...'); return; }
 			    if (bloqueia(ch)) { return; }
 			    S.anda = { x0: S.x, y0: S.y, t0: agora() };
 			    S.x = nx; S.y = ny; S.passo++;
@@ -3080,8 +3080,8 @@ table _Medidas
 			    S.enc++; S.tecla = null; S.vistos[p.id] = 1;
 			    if (shiny) { S.shinies++; }
 			    if (p.lend) { S.lendarios++; }
-			    S.luta = { id: p.id, shiny: shiny, nivel: p.lend ? 50 : 3 + Math.floor(Math.random() * 45), sexo: Math.random() < 0.5 ? '♂' : '♀', fruta: fa"
-			& "lse, fase: 'transicao', tentativas: 0 };
+			    S.luta = { id: p.id, shiny: shiny, nivel: p.lend ? 50 : 3 + Math.floor(Math.random() * 45), sexo: Math.random() < 0.5 ? '♂' : '♀', fruta: false, fase: 'transicao', tent"
+			& "ativas: 0 };
 			    render();
 			    setTimeout(function () {
 			      if (!S.luta) { return; }
@@ -3145,16 +3145,17 @@ table _Medidas
 			  function atualizarTexto() { var t = $('sf-texto'); if (t && S.luta) { t.innerHTML = S.luta.texto || ''; } }
 			  function urlShiny(u) { return u.replace('/showdown/', '/showdown/shiny/').replace('/home/', '/home/shiny/').replace('/official-artwork/', '/official-artwork/shiny/'); }
 			  function lutaHtml() {
-			    var L = S.luta; if (!"
-			& "L) { return ''; }
-			    if (L.fase === 'transicao') { return `<div class='sf-trans'><i></i><i></i><i></i><i></i></div>`; }
+			    var L = S.luta; if (!L) { return ''; }
+			    if (L."
+			& "fase === 'transicao') { return `<div class='sf-trans'><i></i><i></i><i></i><i></i></div>`; }
 			    var p = K.P[L.id], urls = [K.URL.gif(p.id), K.URL.home(p.id), K.URL.arte(p.id)];
 			    if (L.shiny) { urls = urls.map(urlShiny).concat(urls); }
 			    var menu = L.fase === 'menu' ? `<div class='sf-menu'>
 			        ${['poke', 'grande', 'ultra'].map(function (b) { return `<div class='sf-op${S.bolsa[b] ? '' : ' off'}' data-acao='bola' data-b='${b}'><i class='sf-mini' style='--c:${BOLAS[b].cor}'></i><span>${BOLAS[b].nome}<em>×${S.bolsa[b]}</em></span><small>${Math.round(100 * chanceCaptura(L, b))}%</small></div>`; }).join('')}
 			        <div class='sf-op${S.bolsa.fruta && !L.fruta ? '' : ' off'}' data-acao='fruta'><i class='sf-fruta'>🍓</i><span>Fruta Frambo<em>×${S.bolsa.fruta}</em></span><small>+50%</small></div>
 			        <div class='sf-op fugir' data-acao='fugir'><i class='sf-fruta'>🏃</i><span>Fugir<em>voltar ao mato</em></span></div></div>` : '';
-			    return `<div class='sf-luta${p.lend ? ' lend' : ''}${L.shiny ? ' shy' : ''}' id='sf-cena' style='--c:${K.corTipo(p.t[0])}'>
+			    var fixo = L.entrou ? ' fixo' : ''; L.entrou = true;
+			    return `<div class='sf-luta${p.lend ? ' lend' : ''}${L.shiny ? ' shy' : ''}${fixo}' id='sf-cena' style='--c:${K.corTipo(p.t[0])}'>
 			      <div class='sf-ceu'><i class='nv n1'></i><i class='nv n2'></i><i class='nv n3'></i></div><div class='sf-arvores'></div><div class='sf-campo'></div>
 			      <div class='sf-hud'><div class='sf-hud-l'><b>${esc(p.nome)}</b><span class='sx ${L.sexo === '♂' ? 'm' : 'f'}'>${L.sexo}</span>${L.shiny ? `<span class='sf-sh'>✨</span>` : ''}${p.lend ? `<span class='sf-lend'>LENDÁRIO</span>` : ''}<span class='nv-l'>Nv${L.nivel}</span></div>
 			        <div class='sf-hp'><em>HP</em><div><i></i></div></div><div class='sf-tipos'>${p.t.map(K.chip).join('')}<span class='sf-chance'>${L.fruta ? '🍓 calmo · ' : ''}captura com Pokébola <b>${Math.round(100 * chanceCaptura(L, 'poke'))}%</b></span></div></div>
@@ -3176,10 +3177,10 @@ table _Medidas
 			    return `<div class='sf-sec'>REGIÃO DO MATO <em>gerações</em></div><div class='gens sf-gens'>${gens}</div>
 			      <div class='sf-sec'>MOCHILA <em>reabasteça no Centro Pokémon</em></div><div class='sf-bolsa'>${bolsa}</div>
 			      <div class='sf-stats'><div><span>VISTOS</span><b>${vistos}</b></div><div><span>CAPTURAS</span><b>${S.caixa.length}</b></div>
-			        <div class='sh'><span>SHINY</span><b>${S.shinies}/${MAX_SHINY}</b></div><div class='ld'><span>LENDÁRIO</span><b>${S.lendarios}/${MAX_LENDARIO}</b></div></div>
+			        <div><span>ENCONTROS</span><b>${S.enc}</b></div><div><span>FUGAS</span><b>${S.fugas}</b></div></div>
 			      <div class='sf-sec'>SUA CAIXA <em>${S.caixa.length} Pokémon</em></div><div class='sf-caixa'>${caixa || `<span class='vazio'>Capture Pokémon no mato alto!</span>`}</div>
-			      <div class='sf-pad'><div></div><div class='sf-tc' data-tecla='cima'>▲</div><div></div><"
-			& "div class='sf-tc' data-tecla='esq'>◀</div><div class='sf-tc' data-tecla='baixo'>▼</div><div class='sf-tc' data-tecla='dir'>▶</div></div>`;
+			      <div class='sf-pad'><div></div><div class='sf-tc' data-tecla='cima'>▲</div><div></div><div class='sf-tc' data"
+			& "-tecla='esq'>◀</div><div class='sf-tc' data-tecla='baixo'>▼</div><div class='sf-tc' data-tecla='dir'>▶</div></div>`;
 			  }
 			  function atualizarLado() { var l = $('sf-lado'); if (l) { l.innerHTML = ladoHtml(); } }
 			  function desenharTreinadorCostas() {
@@ -3316,7 +3317,7 @@ table _Medidas
 			.sf-dica { font-size: 10px; font-weight: 700; color: #8A93A3; }
 			.sf-jogo { position: absolute; left: 16px; top: 60px; width: 960px; height: 640px; border-radius: 18px; overflow: hidden; border: 4px solid #1F2028; box-shadow: 0 0 0 3px #3A4A6B, 0 18px 40px rgba(0,0,0,.55); outline: none; background: #8CCF68; }
 			.sf-jogo:focus { box-shadow: 0 0 0 3px #FFCB05, 0 18px 40px rgba(0,0,0,.55); }
-			.sf-jogo canvas { display: block; width: 960px; height: 640px; image-rendering: pixelated; }
+			#sf-canvas { display: block; width: 960px; height: 640px; image-rendering: pixelated; }
 			.sf-nuvens { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 			.sf-nuvens i { position: absolute; width: 420px; height: 220px; border-radius: 50%; background: radial-gradient(ellipse, rgba(10,30,10,.16), transparent 70%); animation: sf-nuvem 38s linear infinite; }
 			.sf-nuvens i:nth-child(1) { top: 40px; left: -440px; }
@@ -3330,8 +3331,8 @@ table _Medidas
 			.sf-trans { position: absolute; inset: 0; z-index: 10; animation: sf-pisca .7s steps(2) 1; }
 			.sf-trans i { position: absolute; left: 0; right: 0; height: 25%; background: #05070A; transform: scaleX(0); animation: sf-barra .45s ease-in both; }
 			.sf-trans i:nth-child(1) { top: 0; transform-origin: left; animation-delay: .6s; }
-			.sf-trans i:nth-child(2) { top: 25%; transform-origin: right; ani"
-			& "mation-delay: .68s; }
+			.sf-trans i:nth-child(2) { top: 25%; transform-origin: right; animatio"
+			& "n-delay: .68s; }
 			.sf-trans i:nth-child(3) { top: 50%; transform-origin: left; animation-delay: .76s; }
 			.sf-trans i:nth-child(4) { top: 75%; transform-origin: right; animation-delay: .84s; }
 			@keyframes sf-pisca { 0%, 50% { background: rgba(255,255,255,.9); } 25%, 75% { background: rgba(0,0,0,.65); } 100% { background: transparent; } }
@@ -3360,8 +3361,8 @@ table _Medidas
 			@keyframes sf-escapa { from { transform: scale(0); filter: brightness(0) invert(1); } to { transform: scale(1); filter: none; } }
 			@keyframes sf-foge { to { transform: translateX(520px); opacity: 0; } }
 			.sf-luz { position: absolute; left: 720px; top: 210px; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: #FFF; box-shadow: 0 0 40px 20px rgba(255,120,120,.8); animation: sf-luz .5s ease-out forwards; z-index: 4; }
-			@keyframes sf-luz { from { transform: scale(8); opacity: .9; "
-			& "} to { transform: scale(0); opacity: 0; } }
+			@keyframes sf-luz { from { transform: scale(8); opacity: .9; } to "
+			& "{ transform: scale(0); opacity: 0; } }
 			.sf-mon.shiny img { filter: drop-shadow(0 0 12px rgba(255,225,110,.95)) drop-shadow(0 6px 4px rgba(0,0,0,.28)); }
 			.sf-brilho i { position: absolute; width: 20px; height: 20px; background: #FFF1A8; clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%); animation: sf-cint 1.3s ease-in-out infinite; z-index: 3; }
 			.sf-brilho i:nth-child(1) { left: 14px; top: 40px; } .sf-brilho i:nth-child(2) { left: 186px; top: 66px; animation-delay: .26s; }
@@ -3392,8 +3393,8 @@ table _Medidas
 			.sf-txt b { color: #C83020; }
 			.sf-luta.lend .sf-txt { box-shadow: inset 0 0 0 3px #7A3AE8, 0 5px 0 rgba(0,0,0,.25); }
 			.sf-menu { position: absolute; left: 544px; right: 14px; bottom: 14px; height: 120px; display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 6px; z-index: 4; }
-			.sf-op { position: relative; border-radius: 10px; background: #F8F8F8; border: 3px solid #304060; box-shadow: 0 4px 0 #304060; display: flex; align-items: center; gap: 8px; padding: 0 10px; cursor: pointer; transition: transform .1s, box-shadow .1s"
-			& ", background .1s; }
+			.sf-op { position: relative; border-radius: 10px; background: #F8F8F8; border: 3px solid #304060; box-shadow: 0 4px 0 #304060; display: flex; align-items: center; gap: 8px; padding: 0 10px; cursor: pointer; transition: transform .1s, box-shadow .1s, bac"
+			& "kground .1s; }
 			.sf-op:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #304060; background: #FFF4C8; }
 			.sf-op:hover::before { content: '▶'; position: absolute; left: -2px; color: #C83020; font-size: 10px; }
 			.sf-op.off { opacity: .4; pointer-events: none; }
@@ -3428,8 +3429,8 @@ table _Medidas
 			.sf-item { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 10px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); font-size: 10px; font-weight: 700; color: #C9CFDA; line-height: 1.1; }
 			.sf-item .sf-mini { width: 18px; height: 18px; } .sf-item .sf-mini::after { width: 4px; height: 4px; margin: -4px 0 0 -4px; }
 			.sf-item i { font-style: normal; } .sf-item b { margin-left: auto; color: #fff; }
-			.sf-stats { display: grid"
-			& "; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+			.sf-stats { display: grid; gri"
+			& "d-template-columns: repeat(4, 1fr); gap: 5px; }
 			.sf-stats div { padding: 6px 2px; border-radius: 10px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.06); text-align: center; }
 			.sf-stats span { display: block; font-size: 7px; font-weight: 900; letter-spacing: .08em; color: #8A93A3; }
 			.sf-stats b { font-size: 16px; color: #fff; }
@@ -3447,6 +3448,9 @@ table _Medidas
 			.sf-tc { border-radius: 10px; background: #1A2030; border: 1px solid #283041; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #C9CFDA; cursor: pointer; user-select: none; }
 			.sf-tc:hover { background: #252D40; color: #fff; } .sf-tc:active { background: #FFCB05; color: #11151D; }
 			.vazio { font-size: 11px; color: #5C6575; grid-column: 1 / -1; }
+
+			/* depois da entrada, redesenhar a cena (fruta, bola que falhou) não repete as animações */
+			.sf-luta.fixo, .sf-luta.fixo .sf-mon:not(.suga):not(.escapa):not(.foge), .sf-luta.fixo .sf-tr:not(.joga) { animation: none; }
 			"
 			```
 		displayFolder: <HTML>\CSS

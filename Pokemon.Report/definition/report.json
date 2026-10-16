@@ -24,8 +24,24 @@
           }
         }
       }
+    ],
+    "outspacePane": [
+      {
+        "properties": {
+          "expanded": {
+            "expr": {
+              "Literal": {
+                "Value": "false"
+              }
+            }
+          }
+        }
+      }
     ]
   },
+  "publicCustomVisuals": [
+    "htmlContent443BE3AD55E043BF878BED274D3A6855"
+  ],
   "resourcePackages": [
     {
       "name": "SharedResources",
@@ -46,8 +62,5 @@
     "allowChangeFilterTypes": true,
     "useEnhancedTooltips": true,
     "useDefaultAggregateDisplayName": true
-  },
-  "publicCustomVisuals": [
-    "htmlContent443BE3AD55E043BF878BED274D3A6855"
-  ]
+  }
 }

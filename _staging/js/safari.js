@@ -199,7 +199,7 @@
     if (S.anda || S.luta) { return; }
     S.dir = d;
     var nx = S.x + DIRS[d][0], ny = S.y + DIRS[d][1], ch = tile(nx, ny);
-    if (ch === 'p') { mensagem('📜 <b>ZONA SAFARI</b> · O mato alto esconde Pokémon · O Centro Pokémon reabastece a mochila · Shiny: 1 em ' + SHINY + ' (até ' + MAX_SHINY + ') · Lendário: raro (até ' + MAX_LENDARIO + ')'); return; }
+    if (ch === 'p') { mensagem('📜 <b>ZONA SAFARI</b> · O mato alto esconde Pokémon · O Centro Pokémon reabastece a mochila · Dizem que Pokémon brilhantes e até lendários aparecem por aqui...'); return; }
     if (bloqueia(ch)) { return; }
     S.anda = { x0: S.x, y0: S.y, t0: agora() };
     S.x = nx; S.y = ny; S.passo++;
@@ -315,7 +315,8 @@
         ${['poke', 'grande', 'ultra'].map(function (b) { return `<div class='sf-op${S.bolsa[b] ? '' : ' off'}' data-acao='bola' data-b='${b}'><i class='sf-mini' style='--c:${BOLAS[b].cor}'></i><span>${BOLAS[b].nome}<em>×${S.bolsa[b]}</em></span><small>${Math.round(100 * chanceCaptura(L, b))}%</small></div>`; }).join('')}
         <div class='sf-op${S.bolsa.fruta && !L.fruta ? '' : ' off'}' data-acao='fruta'><i class='sf-fruta'>🍓</i><span>Fruta Frambo<em>×${S.bolsa.fruta}</em></span><small>+50%</small></div>
         <div class='sf-op fugir' data-acao='fugir'><i class='sf-fruta'>🏃</i><span>Fugir<em>voltar ao mato</em></span></div></div>` : '';
-    return `<div class='sf-luta${p.lend ? ' lend' : ''}${L.shiny ? ' shy' : ''}' id='sf-cena' style='--c:${K.corTipo(p.t[0])}'>
+    var fixo = L.entrou ? ' fixo' : ''; L.entrou = true;
+    return `<div class='sf-luta${p.lend ? ' lend' : ''}${L.shiny ? ' shy' : ''}${fixo}' id='sf-cena' style='--c:${K.corTipo(p.t[0])}'>
       <div class='sf-ceu'><i class='nv n1'></i><i class='nv n2'></i><i class='nv n3'></i></div><div class='sf-arvores'></div><div class='sf-campo'></div>
       <div class='sf-hud'><div class='sf-hud-l'><b>${esc(p.nome)}</b><span class='sx ${L.sexo === '♂' ? 'm' : 'f'}'>${L.sexo}</span>${L.shiny ? `<span class='sf-sh'>✨</span>` : ''}${p.lend ? `<span class='sf-lend'>LENDÁRIO</span>` : ''}<span class='nv-l'>Nv${L.nivel}</span></div>
         <div class='sf-hp'><em>HP</em><div><i></i></div></div><div class='sf-tipos'>${p.t.map(K.chip).join('')}<span class='sf-chance'>${L.fruta ? '🍓 calmo · ' : ''}captura com Pokébola <b>${Math.round(100 * chanceCaptura(L, 'poke'))}%</b></span></div></div>
@@ -337,7 +338,7 @@
     return `<div class='sf-sec'>REGIÃO DO MATO <em>gerações</em></div><div class='gens sf-gens'>${gens}</div>
       <div class='sf-sec'>MOCHILA <em>reabasteça no Centro Pokémon</em></div><div class='sf-bolsa'>${bolsa}</div>
       <div class='sf-stats'><div><span>VISTOS</span><b>${vistos}</b></div><div><span>CAPTURAS</span><b>${S.caixa.length}</b></div>
-        <div class='sh'><span>SHINY</span><b>${S.shinies}/${MAX_SHINY}</b></div><div class='ld'><span>LENDÁRIO</span><b>${S.lendarios}/${MAX_LENDARIO}</b></div></div>
+        <div><span>ENCONTROS</span><b>${S.enc}</b></div><div><span>FUGAS</span><b>${S.fugas}</b></div></div>
       <div class='sf-sec'>SUA CAIXA <em>${S.caixa.length} Pokémon</em></div><div class='sf-caixa'>${caixa || `<span class='vazio'>Capture Pokémon no mato alto!</span>`}</div>
       <div class='sf-pad'><div></div><div class='sf-tc' data-tecla='cima'>▲</div><div></div><div class='sf-tc' data-tecla='esq'>◀</div><div class='sf-tc' data-tecla='baixo'>▼</div><div class='sf-tc' data-tecla='dir'>▶</div></div>`;
   }
