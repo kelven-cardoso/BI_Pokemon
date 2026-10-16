@@ -2,6 +2,10 @@
 
 Relatório Power BI (formato **PBIP**: PBIR + TMDL) que transforma dados públicos de Pokémon numa Pokédex interativa e animada, construída com o visual **HTML Content** e medidas DAX que geram HTML + CSS.
 
+### ▶ [Abrir o relatório publicado](https://app.powerbi.com/view?r=eyJrIjoiYmJkMDYwNjItM2Y1NC00YWYyLThhZWQtZTQyMTk4ZGUzOGYwIiwidCI6ImM1NjhjODQyLWIwODItNDAyNi1hZDIxLTY0YTk0NWQyODkwZiJ9)
+
+5 páginas: **Pokédex · Arena · Tipos · Quiz · Safari**. A primeira carga leva alguns segundos (sprites e cartas vêm da internet).
+
 ## Destaques
 
 - **Dados ao vivo via API**: uma única consulta GraphQL na [PokeAPI](https://pokeapi.co) traz 1.302 Pokémon (formas incluídas), atributos, tipos, cadeias evolutivas e a tabela de eficácia de tipos.
