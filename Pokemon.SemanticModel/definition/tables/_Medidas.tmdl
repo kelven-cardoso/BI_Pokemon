@@ -1,7 +1,7 @@
 table _Medidas
 
-	measure '<CSS> Tipos' = ```
-
+	measure '<CSS> Tipos' =
+			
 			"
 			.bg-normal { background-color: #A8A878; } .c-normal { color: #A8A878; } .fl-normal { fill: #A8A878; stroke: #A8A878; } .bc-normal { border-color: #A8A878; } .gl-normal { background-image: radial-gradient(circle, rgba(168,168,120,0.55) 0%, rgba(168,168,120,0.18) 38%, rgba(168,168,120,0) 68%); } .sf-normal { background-color: rgba(168,168,120,0.16); } .sh-normal { box-shadow: 0 0 22px rgba(168,168,120,0.45); }
 			.bg-fire { background-color: #F08030; } .c-fire { color: #F08030; } .fl-fire { fill: #F08030; stroke: #F08030; } .bc-fire { border-color: #F08030; } .gl-fire { background-image: radial-gradient(circle, rgba(240,128,48,0.55) 0%, rgba(240,128,48,0.18) 38%, rgba(240,128,48,0) 68%); } .sf-fire { background-color: rgba(240,128,48,0.16); } .sh-fire { box-shadow: 0 0 22px rgba(240,128,48,0.45); }
@@ -22,79 +22,71 @@ table _Medidas
 			.bg-steel { background-color: #B8B8D0; } .c-steel { color: #B8B8D0; } .fl-steel { fill: #B8B8D0; stroke: #B8B8D0; } .bc-steel { border-color: #B8B8D0; } .gl-steel { background-image: radial-gradient(circle, rgba(184,184,208,0.55) 0%, rgba(184,184,208,0.18) 38%, rgba(184,184,208,0) 68%); } .sf-steel { background-color: rgba(184,184,208,0.16); } .sh-steel { box-shadow: 0 0 22px rgba(184,184,208,0.45); }
 			.bg-fairy { background-color: #EE99AC; } .c-fairy { color: #EE99AC; } .fl-fairy { fill: #EE99AC; stroke: #EE99AC; } .bc-fairy { border-color: #EE99AC; } .gl-fairy { background-image: radial-gradient(circle, rgba(238,153,172,0.55) 0%, rgba(238,153,172,0.18) 38%, rgba(238,153,172,0) 68%); } .sf-fairy { background-color: rgba(238,153,172,0.16); } .sh-fairy { box-shadow: 0 0 22px rgba(238,153,172,0.45); }
 			"
-			```
 		displayFolder: <HTML>\CSS
 
-	measure 'Id Lista' = ```
-
+	measure 'Id Lista' =
+			
 			VAR _sel      = SELECTEDVALUE(Pokemon[PokemonId])
 			VAR _primeiro = MIN(Pokemon[PokemonId])
 			RETURN
 			    IF(ISBLANK(_sel), _primeiro, _sel)
-			```
 		formatString: 0
 		displayFolder: Base
 
-	measure 'Cadeia Lista' = ```
-
+	measure 'Cadeia Lista' =
+			
 			VAR _id = [Id Lista]
 			RETURN
 			    MAXX(FILTER(ALL(Pokemon), Pokemon[PokemonId] = _id), Pokemon[ChainId])
-			```
 		formatString: 0
 		displayFolder: Base
 
-	measure 'Id Evolução Clicada' = ```
-
+	measure 'Id Evolução Clicada' =
+			
 			VAR _filtrado    = ISFILTERED(EvoSel)
 			VAR _clicado     = IF(_filtrado && HASONEVALUE(EvoSel[PokemonId]), VALUES(EvoSel[PokemonId]))
 			VAR _cadeia      = MAXX(FILTER(ALL(EvoSel), EvoSel[PokemonId] = _clicado), EvoSel[ChainId])
 			VAR _cadeiaLista = [Cadeia Lista]
 			RETURN
 			    IF(NOT ISBLANK(_clicado) && _cadeia = _cadeiaLista, _clicado)
-			```
 		formatString: 0
 		displayFolder: Base
 
-	measure 'Id Forma Clicada' = ```
-
+	measure 'Id Forma Clicada' =
+			
 			VAR _filtrado    = ISFILTERED(FormaSel)
 			VAR _clicado     = IF(_filtrado && HASONEVALUE(FormaSel[PokemonId]), VALUES(FormaSel[PokemonId]))
 			VAR _cadeia      = MAXX(FILTER(ALL(FormaSel), FormaSel[PokemonId] = _clicado), FormaSel[ChainId])
 			VAR _cadeiaLista = [Cadeia Lista]
 			RETURN
 			    IF(NOT ISBLANK(_clicado) && _cadeia = _cadeiaLista, _clicado)
-			```
 		formatString: 0
 		displayFolder: Base
 
-	measure 'Id Selecionado' = ```
-
+	measure 'Id Selecionado' =
+			
 			VAR _forma = [Id Forma Clicada]
 			VAR _evo   = [Id Evolução Clicada]
 			VAR _lista = [Id Lista]
 			RETURN
 			    COALESCE(_forma, _evo, _lista)
-			```
 		formatString: 0
 		displayFolder: Base
 
-	measure 'Modo Atual' = ```
-
+	measure 'Modo Atual' =
+			
 			SELECTEDVALUE(Modo[Ordem], 1)
-			```
 		formatString: 0
 		displayFolder: Base
 
-	measure 'Qtd Pokémon' = ```
-
+	measure 'Qtd Pokémon' =
+			
 			CALCULATE(COUNTROWS(Pokemon), REMOVEFILTERS(Pokemon[Nome]))
-			```
 		formatString: 0
 		displayFolder: Base
 
-	measure '<CSS> Base' = ```
-
+	measure '<CSS> Base' =
+			
 			[<CSS> Tipos] & "
 			#htmlContent { margin: 0; padding: 0; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: #E9ECF2; }
 			.pn { position: relative; box-sizing: border-box; height: 100vh; padding: 14px 16px; border-radius: 18px; background: linear-gradient(160deg, rgba(30,36,48,.90), rgba(14,17,24,.92)); border: 1px solid rgba(255,255,255,.07); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 18px 40px rgba(0,0,0,.35); display: flex; flex-direction: column; overflow: hidden; }
@@ -105,11 +97,10 @@ table _Medidas
 			.pn-total { margin-left: auto; font-size: 9px; font-weight: 800; letter-spacing: .14em; color: #8A93A3; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10); padding: 4px 12px; border-radius: 999px; }
 			.pn-total b { font-size: 14px; color: #fff; margin-left: 6px; letter-spacing: 0; }
 			"
-			```
 		displayFolder: <HTML>\CSS
 
-	measure '<HTML> Fundo' = ```
-
+	measure '<HTML> Fundo' =
+			
 			VAR _id      = [Id Selecionado]
 			VAR _modo    = [Modo Atual]
 			VAR _linha   = FILTER(ALL(Pokemon), Pokemon[PokemonId] = _id)
@@ -157,11 +148,10 @@ table _Medidas
 			  & "<div class='fx fx-" & _slug1 & "'>" & _camada1 & "</div>"
 			  & _htmlCamada2 & _camadaShiny
 			  & "</div>"
-			```
 		displayFolder: <HTML>
 
-	measure '<CSS> Fundo' = ```
-
+	measure '<CSS> Fundo' =
+			
 			[<CSS> Tipos] & "
 			#htmlContent { margin: 0; padding: 0; height: 100vh; overflow: hidden; }
 			.htmlViewerEntry { height: 100vh; }
@@ -174,32 +164,32 @@ table _Medidas
 			.bg-ball i { position: absolute; width: 120px; height: 120px; left: 50%; top: 50%; transform: translate(-50%, -50%); border-radius: 50%; border: 2px solid rgba(255,255,255,.05); }
 			.bg-num { position: absolute; left: 352px; bottom: 210px; font-size: 230px; font-weight: 900; line-height: 1; letter-spacing: -.04em; color: transparent; -webkit-text-stroke: 2px rgba(255,255,255,.045); }
 			@keyframes gira { to { transform: rotate(360deg); } }
-
+			
 			/* ---------- partículas por tipo ---------- */
 			.fx { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 			.fx i { position: absolute; display: block; opacity: 0; animation-iteration-count: infinite; animation-timing-function: linear; }
 			.fx2 i { animation-duration: 9s; }
-
+			
 			/* sobem: água, veneno, normal */
 			.fx-water i, .fx-poison i, .fx-normal i { top: auto !important; bottom: -30px; border-radius: 50%; animation-name: bolha; animation-timing-function: ease-in-out; }
 			.fx-water i { border: 1.5px solid rgba(190,215,255,.60); background: radial-gradient(circle at 32% 30%, rgba(255,255,255,.70) 0 12%, rgba(120,160,255,.12) 40%, rgba(104,144,240,.05) 70%); transform-origin: center; }
 			.fx-poison i { border: 1.5px solid rgba(220,150,230,.55); background: radial-gradient(circle at 32% 30%, rgba(255,255,255,.55) 0 12%, rgba(160,64,160,.30) 45%, rgba(160,64,160,.08) 70%); }
 			.fx-normal i { background: rgba(255,255,255,.22); }
 			@keyframes bolha { 0% { transform: translate(0,0) scale(.7); opacity: 0; } 10% { opacity: .9; } 50% { transform: translate(18px,-380px) scale(1.2); } 90% { opacity: .8; } 100% { transform: translate(-10px,-780px) scale(1.5); opacity: 0; } }
-
+			
 			/* fogo: brasas + calor na base */
 			.fx-fire i { top: auto !important; bottom: -10px; width: 4px !important; height: 4px !important; border-radius: 50%; background: #FFD27A; box-shadow: 0 0 6px 2px rgba(255,140,40,.85), 0 0 14px 4px rgba(255,80,20,.35); animation-name: brasa; animation-timing-function: ease-out; }
 			.fx-fire::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 240px; background: linear-gradient(0deg, rgba(240,128,48,.20), transparent); animation: calor 2.6s ease-in-out infinite alternate; }
 			@keyframes brasa { 0% { transform: translate(0,0) scale(1); opacity: 0; } 8% { opacity: 1; } 30% { transform: translate(-14px,-200px) scale(.9); } 60% { transform: translate(16px,-420px) scale(.7); opacity: .9; } 100% { transform: translate(-6px,-680px) scale(.2); opacity: 0; } }
 			@keyframes calor { from { opacity: .55; } to { opacity: 1; } }
-
+			
 			/* elétrico: raios piscando + clarão */
 			.fx-electric i { width: 18px !important; height: 50px !important; filter: drop-shadow(0 0 6px rgba(248,208,48,.95)); animation-name: raio; animation-timing-function: steps(1, end); }
 			.fx-electric i::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, #FFFBD0, #F8D030); clip-path: polygon(55% 0, 18% 56%, 45% 56%, 28% 100%, 86% 40%, 58% 40%, 76% 0); }
 			.fx-electric::before { content: ''; position: absolute; inset: 0; background: rgba(255,240,150,.10); opacity: 0; animation: clarao 5s steps(1, end) infinite; }
 			@keyframes raio { 0%, 100% { opacity: 0; } 3% { opacity: 1; } 5% { opacity: .1; } 7% { opacity: 1; } 10% { opacity: 0; } }
 			@keyframes clarao { 0%, 100% { opacity: 0; } 60% { opacity: 1; } 61% { opacity: 0; } 63% { opacity: .7; } 64% { opacity: 0; } }
-
+			
 			/* caem: planta (folhas), gelo (neve), pedra (fragmentos) */
 			.fx-grass i, .fx-ice i, .fx-rock i { top: -30px !important; animation-timing-function: ease-in-out; }
 			.fx-grass i { width: 10px !important; height: 16px !important; border-radius: 0 100% 0 100%; background: linear-gradient(135deg, #A8E68A, #4E9A2F); animation-name: folha; }
@@ -208,16 +198,16 @@ table _Medidas
 			@keyframes folha { 0% { transform: translate(0,0) rotate(0); opacity: 0; } 10% { opacity: .85; } 50% { transform: translate(-60px,380px) rotate(200deg); } 90% { opacity: .7; } 100% { transform: translate(40px,780px) rotate(420deg); opacity: 0; } }
 			@keyframes neve { 0% { transform: translate(0,0); opacity: 0; } 10% { opacity: .9; } 50% { transform: translate(30px,380px); } 100% { transform: translate(-20px,780px); opacity: 0; } }
 			@keyframes pedra { 0% { transform: translate(0,0) rotate(0); opacity: 0; } 5% { opacity: .8; } 100% { transform: translate(20px,780px) rotate(360deg); opacity: .5; } }
-
+			
 			/* fantasma: almas subindo */
 			.fx-ghost i { top: auto !important; bottom: -60px; width: 46px !important; height: 46px !important; border-radius: 50%; background: radial-gradient(circle, rgba(170,140,230,.55), rgba(112,88,152,0) 70%); filter: blur(2px); animation-name: alma; animation-timing-function: ease-in-out; }
 			@keyframes alma { 0% { transform: translate(0,0) scale(.6); opacity: 0; } 20% { opacity: .85; } 50% { transform: translate(40px,-360px) scale(1.2); } 80% { opacity: .5; } 100% { transform: translate(-30px,-760px) scale(.8); opacity: 0; } }
-
+			
 			/* psíquico e lutador: ondas de impacto */
 			.fx-psychic i, .fx-fighting i { width: 30px !important; height: 30px !important; border-radius: 50%; border: 2px solid rgba(248,88,136,.70); animation-name: pulso; animation-timing-function: ease-out; }
 			.fx-fighting i { border-color: rgba(255,120,60,.70); }
 			@keyframes pulso { 0% { transform: scale(.2); opacity: 0; } 10% { opacity: .9; } 100% { transform: scale(4); opacity: 0; } }
-
+			
 			/* voador: vento | terrestre: poeira | sombrio: fumaça */
 			.fx-flying i { width: 110px !important; height: 2px !important; border-radius: 2px; background: linear-gradient(90deg, transparent, rgba(225,225,255,.65), transparent); animation-name: vento; animation-timing-function: ease-in-out; }
 			.fx-ground i { border-radius: 50%; background: rgba(224,192,104,.55); filter: blur(1px); animation-name: poeira; }
@@ -225,7 +215,7 @@ table _Medidas
 			@keyframes vento { 0% { transform: translateX(-300px); opacity: 0; } 20% { opacity: .8; } 100% { transform: translateX(500px); opacity: 0; } }
 			@keyframes poeira { 0% { transform: translate(-40px,0); opacity: 0; } 20% { opacity: .7; } 100% { transform: translate(260px,-60px); opacity: 0; } }
 			@keyframes fumaca { 0% { transform: translate(0,0) scale(.6); opacity: 0; } 30% { opacity: .7; } 100% { transform: translate(120px,-140px) scale(1.6); opacity: 0; } }
-
+			
 			/* brilhos: fada, dragão, aço, shiny | inseto: vagalumes */
 			.fx-fairy i, .fx-dragon i, .fx-steel i, .fx-shiny i { width: 12px !important; height: 12px !important; clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%); animation-name: brilho; animation-timing-function: ease-in-out; }
 			.fx-fairy i { background: #FFD6E8; }
@@ -236,22 +226,20 @@ table _Medidas
 			@keyframes brilho { 0%, 100% { transform: scale(0) rotate(0); opacity: 0; } 50% { transform: scale(1.4) rotate(90deg); opacity: 1; } }
 			@keyframes vagalume { 0% { transform: translate(0,0); opacity: 0; } 25% { transform: translate(30px,-20px); opacity: 1; } 50% { transform: translate(-10px,-50px); opacity: .3; } 75% { transform: translate(-40px,-10px); opacity: 1; } 100% { transform: translate(0,0); opacity: 0; } }
 			"
-			```
 		displayFolder: <HTML>\CSS
 
-	measure '<HTML> Marca' = ```
-
+	measure '<HTML> Marca' =
+			
 			VAR _qtd    = [Qtd Pokémon]
 			VAR _qtdFmt = IF(ISBLANK(_qtd), "0", FORMAT(_qtd, "#,##0", "pt-BR"))
 			VAR _rotulo = IF(_qtd = 1, " Pokémon encontrado", " Pokémon encontrados")
 			RETURN
 			    "<div class='mk'><div class='mk-ball'></div>"
 			  & "<div class='mk-txt'><b>POKÉDEX</b><span>" & _qtdFmt & _rotulo & "</span></div></div>"
-			```
 		displayFolder: <HTML>
 
-	measure '<CSS> Marca' = ```
-
+	measure '<CSS> Marca' =
+			
 			"
 			#htmlContent { margin: 0; padding: 0; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
 			.htmlViewerEntry { height: 100vh; }
@@ -262,11 +250,10 @@ table _Medidas
 			.mk-txt span { font-size: 11px; font-weight: 600; color: #8A93A3; }
 			@keyframes balanca { 0%, 70%, 100% { transform: rotate(0); } 75% { transform: rotate(-14deg); } 80% { transform: rotate(12deg); } 85% { transform: rotate(-8deg); } 90% { transform: rotate(4deg); } }
 			"
-			```
 		displayFolder: <HTML>\CSS
 
-	measure '<HTML> Hero' = ```
-
+	measure '<HTML> Hero' =
+			
 			VAR _id        = [Id Selecionado]
 			VAR _idLista   = [Id Lista]
 			VAR _idEvo     = [Id Evolução Clicada]
@@ -367,11 +354,10 @@ table _Medidas
 			  & "<span class='pill" & _classeRar & "'>" & _raridade & "</span>" & _pillShiny & "</div>"
 			  & IF(_modo = 3, _galeria, _palco)
 			  & "</div>"
-			```
 		displayFolder: <HTML>
 
-	measure '<CSS> Hero' = ```
-
+	measure '<CSS> Hero' =
+			
 			[<CSS> Tipos] & "
 			#htmlContent { margin: 0; padding: 0; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: #E9ECF2; }
 			.htmlViewerEntry { height: 100vh; }
@@ -388,7 +374,7 @@ table _Medidas
 			.hero-nome.hn-p { font-size: 28px; }
 			.shiny .hero-nome { background: linear-gradient(90deg, #fff 0%, #FFE58A 40%, #fff 60%, #FFE58A 100%); background-size: 200% 100%; -webkit-background-clip: text; color: transparent; animation: ouro 3s linear infinite; }
 			.hero-cat { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #9AA3B2; }
-
+			
 			/* palco */
 			.hero-palco { position: relative; width: 100%; flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; }
 			.hero-glow { position: absolute; width: 360px; height: 360px; left: 50%; top: 50%; transform: translate(-50%, -50%); }
@@ -402,11 +388,11 @@ table _Medidas
 			.fato { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 7px 10px; text-align: center; }
 			.fato span { display: block; font-size: 9px; font-weight: 800; letter-spacing: .16em; color: #8A93A3; }
 			.fato b { font-size: 17px; font-weight: 800; color: #fff; }
-
+			
 			/* shiny */
 			.brilhos { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
 			.brilhos i { position: absolute; width: 16px; height: 16px; background: #FFF1A8; clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%); animation: cintila 2.2s ease-in-out infinite; }
-
+			
 			/* evolução: silhuetas alternando, raios, clarão e mensagem */
 			.evo-antes { position: absolute; z-index: 2; height: 210px; max-width: 80%; object-fit: contain; filter: brightness(0) invert(1) drop-shadow(0 0 16px rgba(255,255,255,.9)); animation: evo-antigo 3s ease-in-out 1 both; }
 			.evo .hero-img { animation: evo-novo 3s ease-in-out 1 both, flutua 4.5s ease-in-out 3s infinite; }
@@ -414,7 +400,7 @@ table _Medidas
 			.evo-raios { position: absolute; width: 440px; height: 440px; left: 50%; top: 50%; margin: -220px 0 0 -220px; border-radius: 50%; background: repeating-conic-gradient(rgba(255,255,255,.18) 0 6deg, transparent 6deg 22deg); -webkit-mask-image: radial-gradient(circle, #000 20%, transparent 70%); animation: raios 3s ease-in-out 1 both; }
 			.evo-flash { position: absolute; z-index: 4; width: 320px; height: 320px; left: 50%; top: 50%; margin: -160px 0 0 -160px; border-radius: 50%; background: radial-gradient(circle, #fff 0%, rgba(255,255,255,.6) 35%, rgba(255,255,255,0) 70%); pointer-events: none; animation: flash 3s ease-out 1 both; }
 			.evo-msg { position: absolute; z-index: 5; bottom: 6px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 12px; font-weight: 800; color: #fff; background: rgba(10,12,18,.80); border: 1px solid rgba(255,255,255,.18); padding: 6px 14px; border-radius: 999px; animation: msg 3s ease-out 1 both; }
-
+			
 			/* galeria de cartas */
 			.cg-head { width: 100%; font-size: 11px; font-weight: 800; letter-spacing: .16em; color: #8A93A3; margin: 12px 0 8px; }
 			.cg-head b { color: #fff; margin-left: 8px; }
@@ -434,7 +420,7 @@ table _Medidas
 			.cg-prev span, .cg-padrao span { font-size: 10px; color: #A9B1BF; line-height: 1.4; }
 			.cg-prev b, .cg-padrao b { display: block; font-size: 11px; color: #fff; }
 			.cg-vazio { margin-top: 40px; font-size: 12px; color: #737C8C; }
-
+			
 			@keyframes gira { to { transform: rotate(360deg); } }
 			@keyframes flutua { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
 			@keyframes agita { 0%, 100% { transform: rotate(0) scale(1.04); } 25% { transform: rotate(-5deg) scale(1.06); } 75% { transform: rotate(5deg) scale(1.06); } }
@@ -456,11 +442,10 @@ table _Medidas
 			@keyframes flash { 0%, 62% { opacity: 0; transform: scale(.3); } 68% { opacity: .95; transform: scale(1.6); } 100% { opacity: 0; transform: scale(2.2); } }
 			@keyframes msg { 0%, 75% { opacity: 0; transform: translate(-50%, 8px); } 88%, 100% { opacity: 1; transform: translate(-50%, 0); } }
 			"
-			```
 		displayFolder: <HTML>\CSS
 
-	measure '<HTML> Atributos' = ```
-
+	measure '<HTML> Atributos' =
+			
 			VAR _id       = [Id Selecionado]
 			VAR _linha    = FILTER(ALL(Pokemon), Pokemon[PokemonId] = _id)
 			VAR _hp       = MAXX(_linha, Pokemon[HP])
@@ -549,11 +534,10 @@ table _Medidas
 			  & "<polygon class='rd-poly fl-" & _slug & "' points='" & _pontos & "'/>" & _bolinhas & _rotulos & "</svg>"
 			  & "<div class='bars'>" & _barras & "</div>"
 			  & "</div></div>"
-			```
 		displayFolder: <HTML>
 
-	measure '<CSS> Atributos' = ```
-
+	measure '<CSS> Atributos' =
+			
 			[<CSS> Base] & "
 			.htmlViewerEntry { height: 100vh; }
 			.at { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 196px 1fr; gap: 14px; align-items: center; }
@@ -571,11 +555,10 @@ table _Medidas
 			.br-v { font-size: 12px; font-weight: 800; color: #fff; text-align: right; }
 			@keyframes enche { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 			"
-			```
 		displayFolder: <HTML>\CSS
 
-	measure '<HTML> Fraquezas' = ```
-
+	measure '<HTML> Fraquezas' =
+			
 			VAR _id       = [Id Selecionado]
 			VAR _linha    = FILTER(ALL(Pokemon), Pokemon[PokemonId] = _id)
 			VAR _slug     = MAXX(_linha, Pokemon[Tipo1Slug])
@@ -609,11 +592,10 @@ table _Medidas
 			  & "<span class='pn-sub'>dano recebido</span></div>"
 			  & "<div class='fx'>" & _htmlFraco & _htmlRes & "</div>"
 			  & "</div>"
-			```
 		displayFolder: <HTML>
 
-	measure '<CSS> Fraquezas' = ```
-
+	measure '<CSS> Fraquezas' =
+			
 			[<CSS> Base] & "
 			.htmlViewerEntry { height: 100vh; }
 			.fx { flex: 1 1 auto; min-height: 0; overflow: hidden; }
@@ -628,11 +610,10 @@ table _Medidas
 			.ch-imune b { background: #0B0E14; color: #9BE7A6; }
 			.fx-vazio { font-size: 10px; color: #5C6575; margin-bottom: 10px; }
 			"
-			```
 		displayFolder: <HTML>\CSS
 
-	measure '<HTML> Evolução Moldura' = ```
-
+	measure '<HTML> Evolução Moldura' =
+			
 			VAR _id   = [Id Selecionado]
 			VAR _slug = MAXX(FILTER(ALL(Pokemon), Pokemon[PokemonId] = _id), Pokemon[Tipo1Slug])
 			RETURN
@@ -640,11 +621,10 @@ table _Medidas
 			  & "<div class='pn-head'><span class='pn-ico bg-" & _slug & " sh-" & _slug & "'></span><span class='pn-tit'>EVOLUÇÃO</span>"
 			  & "<span class='pn-sub'>clique no próximo estágio para evoluir · de novo para voltar</span></div>"
 			  & "</div>"
-			```
 		displayFolder: <HTML>
 
-	measure '<HTML> Formas Moldura' = ```
-
+	measure '<HTML> Formas Moldura' =
+			
 			VAR _id      = [Id Selecionado]
 			VAR _linha   = FILTER(ALL(Pokemon), Pokemon[PokemonId] = _id)
 			VAR _slug    = MAXX(_linha, Pokemon[Tipo1Slug])
@@ -656,19 +636,17 @@ table _Medidas
 			  & "<div class='pn-head'><span class='pn-ico bg-" & _slug & " sh-" & _slug & "'></span><span class='pn-tit'>FORMAS</span>"
 			  & "<span class='pn-sub'>" & _qtdFmt & IF(_qtd = 1, " forma", " formas") & "</span></div>"
 			  & "</div>"
-			```
 		displayFolder: <HTML>
 
-	measure '<CSS> Moldura' = ```
-
+	measure '<CSS> Moldura' =
+			
 			[<CSS> Base] & "
 			.htmlViewerEntry { height: 100vh; }
 			"
-			```
 		displayFolder: <HTML>\CSS
 
-	measure '<HTML> Evolução Item' = ```
-
+	measure '<HTML> Evolução Item' =
+			
 			VAR _ordem      = SELECTEDVALUE(EvoSel[OrdemEvo])
 			VAR _rowCadeia  = SELECTEDVALUE(EvoSel[ChainId])
 			VAR _rowPadrao  = SELECTEDVALUE(EvoSel[IsDefault])
@@ -705,11 +683,10 @@ table _Medidas
 			      & "<div class='ev-card'>" & _seloEvo & "<div class='ev-img gl-" & _slug & "'><img src='" & _img & "'/></div>"
 			      & "<span class='ev-nome'>" & _nome & "</span>" & _nivelHtml & "</div></div>"
 			    )
-			```
 		displayFolder: <HTML>
 
-	measure '<CSS> Evolução Item' = ```
-
+	measure '<CSS> Evolução Item' =
+			
 			[<CSS> Tipos] & "
 			#htmlContent { margin: 0; padding: 0; height: 100vh; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; align-content: center; justify-content: center; gap: 2px; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
 			.htmlViewerEntry { flex: 0 0 auto; }
@@ -737,11 +714,10 @@ table _Medidas
 			@keyframes chama { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
 			@keyframes respira { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
 			"
-			```
 		displayFolder: <HTML>\CSS
 
-	measure '<HTML> Formas Item' = ```
-
+	measure '<HTML> Formas Item' =
+			
 			VAR _rowId      = SELECTEDVALUE(FormaSel[PokemonId])
 			VAR _rowEspecie = SELECTEDVALUE(FormaSel[SpeciesId])
 			VAR _forma      = SELECTEDVALUE(FormaSel[Forma])
@@ -758,11 +734,10 @@ table _Medidas
 			        "<div class='fm" & _classeAtual & "'><div class='fm-img gl-" & _slug & "'><img src='" & _img & "'/></div>"
 			      & "<span>" & _forma & "</span></div>"
 			    )
-			```
 		displayFolder: <HTML>
 
-	measure '<CSS> Formas Item' = ```
-
+	measure '<CSS> Formas Item' =
+			
 			[<CSS> Tipos] & "
 			#htmlContent { margin: 0; padding: 0 0 4px; height: 100vh; box-sizing: border-box; display: flex; align-items: center; gap: 6px; overflow-x: auto; overflow-y: hidden; font-family: 'Segoe UI', sans-serif; }
 			#htmlContent::-webkit-scrollbar { height: 5px; }
@@ -778,41 +753,10 @@ table _Medidas
 			.htmlViewerEntry.unselected .fm { opacity: .35; }
 			#statusMessage div { display: none; }
 			"
-			```
 		displayFolder: <HTML>\CSS
 
-	measure 'JS Dados' = ```
-
-			VAR _pk = CONCATENATEX(
-			    ALL(Pokemon),
-			    "[" & Pokemon[PokemonId] & ",'" & SUBSTITUTE(Pokemon[Nome], "'", "\'") & "'," & Pokemon[SpeciesId]
-			  & ",'" & Pokemon[Tipo1Slug] & "','" & Pokemon[Tipo2Slug] & "',"
-			  & COALESCE(Pokemon[HP], 1) & "," & COALESCE(Pokemon[Ataque], 1) & "," & COALESCE(Pokemon[Defesa], 1) & ","
-			  & COALESCE(Pokemon[AtqEsp], 1) & "," & COALESCE(Pokemon[DefEsp], 1) & "," & COALESCE(Pokemon[Velocidade], 1) & ","
-			  & IF(Pokemon[IsDefault], 1, 0) & "," & COALESCE(Pokemon[Geracao], 0) & "," & IF(Pokemon[Lendario] || Pokemon[Mitico], 1, 0) & "]",
-			    ",", Pokemon[OrdemDex], ASC
-			)
-			VAR _ef = CONCATENATEX(
-			    FILTER(ALL(Eficacia), Eficacia[Fator] <> 1),
-			    "'" & Eficacia[Ataque] & ">" & Eficacia[Defesa] & "':" & FORMAT(Eficacia[Fator], "0.0#", "en-US"),
-			    ","
-			)
-			VAR _gp = CONCATENATEX(
-			    ALL(Golpes),
-			    "['" & Golpes[Tipo] & "','" & Golpes[Categoria] & "','" & Golpes[Papel] & "','" & SUBSTITUTE(Golpes[Nome], "'", "\'")
-			  & "'," & Golpes[Poder] & "," & Golpes[Precisao] & "," & Golpes[Prioridade] & "]",
-			    ","
-			)
-			VAR _tp = CONCATENATEX(ALL(Tipos), Tipos[TipoSlug] & ":['" & Tipos[Tipo] & "','" & Tipos[Cor] & "']", ",", Tipos[Ordem], ASC)
-			VAR _versao = COUNTROWS(ALL(Pokemon)) * 1000 + COUNTROWS(ALL(Golpes))
-			RETURN
-			    "window.ARENA_DADOS={v:" & _versao & ",pk:[" & _pk & "],ef:{" & _ef & "},gp:[" & _gp & "],tp:{" & _tp & "}};"
-			```
-		formatString: 0
-		displayFolder: Base
-
-	measure '<HTML> Arena' = ```
-
+	measure '<HTML> Arena' =
+			
 			VAR _dados = [JS Dados]
 			VAR _motor =
 			"/* Base compartilhada das páginas em JavaScript (Arena, Tipos, Quiz).
@@ -824,7 +768,7 @@ table _Medidas
 			  var D = window.ARENA_DADOS;
 			  if (!D) { return; }
 			  if (window.PK && window.PK.v === D.v) { return; }
-
+			
 			  var SPR = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/';
 			  var ICO = 'https://raw.githubusercontent.com/partywhale/pokemon-type-icons/main/icons/';
 			  var P = {}, LISTA = [];
@@ -835,7 +779,7 @@ table _Medidas
 			    P[p.id] = p; LISTA.push(p);
 			  });
 			  var TIPOS = Object.keys(D.tp);
-
+			
 			  function ef(a, d) { var x = D.ef[a + '>' + d]; return x === undefined ? 1 : x; }
 			  function efTotal(tipo, tiposDef) { return tiposDef.reduce(function (m, d) { return m * ef(tipo, d); }, 1); }
 			  function corTipo(t) { return (D.tp[t] || ['', '#888'])[1]; }
@@ -892,12 +836,12 @@ table _Medidas
 			    }
 			    return `<div class='fx fx-${tipo}'>${html}</div>`;
 			  }
-
+			
 			  window.PK = { v: D.v, D: D, P: P, LISTA: LISTA, TIPOS: TIPOS, ef: ef, efTotal: efTotal, corTipo: corTipo,
 			    nomeTipo: nomeTipo, icone: icone, chip: chip, esc: esc, fmtEf: fmtEf, normalizar: normalizar, URL: URL,
 			    img: img, escala: escala, aleatorio: aleatorio, embaralhar: embaralhar, particulas: particulas };
 			})();
-
+			
 			/* Arena Pokémon: batalhas 1x1 e Time de 3 (com troca) dentro do visual HTML Content.
 			   Usa window.PK (comum.js). O estado fica em window.__arena: se o Power BI redesenhar
 			   o visual, a batalha continua de onde parou. Não use aspas duplas neste arquivo. */
@@ -906,7 +850,7 @@ table _Medidas
 			  if (!K || !raiz) { return; }
 			  var D = K.D, P = K.P, LISTA = K.LISTA, esc = K.esc, corTipo = K.corTipo, nomeTipo = K.nomeTipo, icone = K.icone;
 			  var NIVEL = 50;
-
+			
 			  /* ================= REGRAS ================= */
 			  var G = {};
 			  D.gp.forEach(function (r) { G[r[0] + '|' + r[1] + '|' + r[2]] = { t: r[0], c: r[1], papel: r[2], nome: r[3], pw: r[4], ac: r[5], pr: r[6] }; });
@@ -927,7 +871,7 @@ table _Medidas
 			  function novoLado(ids) { return { time: ids.map(lutador), ativo: 0 }; }
 			  function ativo(l) { return l.time[l.ativo]; }
 			  function vivos(l) { return l.time.filter(function (m) { return m.hp > 0; }); }
-
+			
 			  /* ---------- Mega Evolução e Gigantamax (uma transformação por time) ---------- */
 			  function formasDe(p, tipo) {
 			    var chave = tipo === 'mega' ? ' Mega' : ' Gigantamax';
@@ -1037,7 +981,7 @@ table _Medidas
 			    for (var i = 0; i < n; i++) { var r = simular(S.time.j, S.time.o); if (r.venc === 'j') { vj++; } tt += r.turnos; }
 			    return { j: 100 * vj / n, o: 100 - 100 * vj / n, turnos: tt / n, n: n };
 			  }
-
+			
 			  /* ================= ESTADO ================= */
 			  var S = window.__arena;
 			  if (!S || S.versao !== D.v) {
@@ -1048,7 +992,7 @@ table _Medidas
 			  function $(id) { return document.getElementById(id); }
 			  function esperar(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 			  function tamanhoTime() { return S.modo === 1 ? 1 : 3; }
-
+			
 			  /* ================= SELEÇÃO ================= */
 			  function slotHtml(l, i) {
 			    var id = S.time[l][i];
@@ -1120,7 +1064,7 @@ table _Medidas
 			        <div class='bt bt-go${cheio ? '' : ' off'}' data-acao='batalhar'>⚔ BATALHAR!</div></div>
 			    </div>`;
 			  }
-
+			
 			  /* ================= BATALHA ================= */
 			  function hpClasse(m) { var p = m.hp / m.hpMax; return p > 0.5 ? 'ok' : p > 0.2 ? 'med' : 'baixo'; }
 			  function barraTopo(lado) {
@@ -1222,7 +1166,7 @@ table _Medidas
 			      ${overlayHtml()}
 			    </div>`;
 			  }
-
+			
 			  /* ================= RENDER ================= */
 			  function render() {
 			    raiz.innerHTML = S.tela === 'batalha' && S.B ? telaBatalha() : telaSelecao();
@@ -1233,7 +1177,7 @@ table _Medidas
 			  }
 			  function registrar(txt) { S.log.push(txt); var log = $('ar-log'); if (log) { log.innerHTML = logHtml(); log.scrollTop = log.scrollHeight; } }
 			  function mensagem(txt) { S.msg = txt; var m = $('ar-msg'); if (m) { m.innerHTML = '<span>' + txt + '</span>'; m.classList.remove('nova'); void m.offsetWidth; m.classList.add('nova'); } }
-
+			
 			  /* ================= EFEITOS POR TIPO ================= */
 			  var FX = {
 			    fire: ['chama', 'explosao'], water: ['bolha', 'respingo'], grass: ['folha', 'folhas'], electric: [null, 'raio'],
@@ -1333,7 +1277,7 @@ table _Medidas
 			    if (g) { g.style.width = pct + '%'; }
 			    await esperar(250);
 			  }
-
+			
 			  /* ================= TURNO ================= */
 			  async function usarGolpe(lado, idx) {
 			    var B = S.B, foe = lado === 'j' ? 'o' : 'j', a = ativo(B[lado]), d = ativo(B[foe]), g = a.golpes[idx];
@@ -1461,7 +1405,7 @@ table _Medidas
 			    if (mj) { mj.classList.add('entra'); } if (mo) { mo.classList.add('entra'); }
 			    S.ocupado = false; S.msg = 'O que <b>' + esc(a.nome) + '</b> vai fazer?'; render();
 			  }
-
+			
 			  /* ================= CLIQUES ================= */
 			  function sortear(l) {
 			    var base = LISTA.filter(function (p) { return p.padrao; });
@@ -1512,7 +1456,7 @@ table _Medidas
 			    }
 			  };
 			  if (!window.__arenaResize) { window.__arenaResize = true; window.addEventListener('resize', function () { K.escala(raiz); }); }
-
+			
 			  window.__arenaApi = { simular: simular, golpesDe: golpesDe, statusDe: statusDe, opcoesTransformar: opcoesTransformar, aplicarForma: aplicarForma, desfazerGmax: desfazerGmax, novoLado: novoLado };
 			  render();
 			  if (S.auto && S.tela === 'batalha' && !S.ocupado) { proximoAuto(); }
@@ -1520,11 +1464,10 @@ table _Medidas
 			"
 			RETURN
 			    "<div id='app-raiz'></div><script>" & _dados & "</script><script>" & _motor & "</script>"
-			```
 		displayFolder: <HTML>
 
-	measure '<CSS> Arena' = ```
-
+	measure '<CSS> Arena' =
+			
 			"#htmlContent { margin: 0; padding: 0; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: #E9ECF2; background: #0B0E14; }
 			.htmlViewerEntry { height: 100vh; }
 			#app-raiz { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: #0B0E14; }
@@ -1546,7 +1489,7 @@ table _Medidas
 			.titulo span { font-size: 10px; color: #8A93A3; font-weight: 600; letter-spacing: .06em; }
 			.vidro { border-radius: 18px; background: linear-gradient(160deg, rgba(30,36,48,.92), rgba(14,17,24,.94)); border: 1px solid rgba(255,255,255,.08); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 18px 40px rgba(0,0,0,.35); }
 			::-webkit-scrollbar { width: 6px; height: 6px; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 6px; } ::-webkit-scrollbar-track { background: transparent; }
-
+			
 			/* partículas de fundo por tipo (iguais às da Pokédex) */
 			.fx { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 			.fx i { position: absolute; display: block; opacity: 0; animation-iteration-count: infinite; animation-timing-function: linear; }
@@ -1585,7 +1528,7 @@ table _Medidas
 			.fx-bug i { width: 5px !important; height: 5px !important; border-radius: 50%; background: #E6F57A; box-shadow: 0 0 10px 3px rgba(200,230,80,.70); animation-name: vagalume; animation-timing-function: ease-in-out; }
 			@keyframes brilhofx { 0%, 100% { transform: scale(0) rotate(0); opacity: 0; } 50% { transform: scale(1.4) rotate(90deg); opacity: 1; } }
 			@keyframes vagalume { 0% { transform: translate(0,0); opacity: 0; } 25% { transform: translate(30px,-20px); opacity: 1; } 50% { transform: translate(-10px,-50px); opacity: .3; } 75% { transform: translate(-40px,-10px); opacity: 1; } 100% { transform: translate(0,0); opacity: 0; } }
-
+			
 			/* controles compartilhados (abas, gerações) */
 			.modos { display: flex; gap: 6px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10); padding: 4px; border-radius: 999px; }
 			.modos span { padding: 6px 16px; border-radius: 999px; font-size: 11px; font-weight: 800; color: #C9CFDA; cursor: pointer; white-space: nowrap; transition: background .12s, color .12s; }
@@ -1596,7 +1539,7 @@ table _Medidas
 			.gc:hover { color: #fff; border-color: rgba(255,255,255,.25); }
 			.gc.on { background: #FFCB05; color: #11151D; border-color: #FFCB05; }
 			.topo { left: 452px; }
-
+			
 			/* ================= SELEÇÃO ================= */
 			.sel-bg { position: absolute; inset: 0; background: radial-gradient(circle at 18% 60%, rgba(61,140,255,.18), transparent 40%), radial-gradient(circle at 82% 60%, rgba(255,90,54,.16), transparent 40%), repeating-linear-gradient(60deg, rgba(255,255,255,.025) 0 1px, transparent 1px 64px); }
 			.modos { display: flex; gap: 6px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10); padding: 4px; border-radius: 999px; }
@@ -1653,7 +1596,7 @@ table _Medidas
 			.pv-barra { flex: 0 0 420px; display: flex; height: 22px; border-radius: 999px; overflow: hidden; font-size: 10px; font-weight: 900; }
 			.pv-j { background: linear-gradient(90deg, #2563EB, #3D8CFF); color: #fff; display: flex; align-items: center; padding-left: 10px; white-space: nowrap; transition: width .5s; }
 			.pv-o { flex: 1; background: linear-gradient(90deg, #FF5A36, #E5383B); color: #fff; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; white-space: nowrap; }
-
+			
 			/* ================= BATALHA ================= */
 			.campo { position: absolute; inset: 0; background: radial-gradient(circle at var(--x, 50%) 45%, color-mix(in srgb, var(--c) 75%, #fff 0%), color-mix(in srgb, var(--c) 55%, #05070B) 75%); }
 			.campo-j { clip-path: polygon(0 0, 47% 0, 53% 100%, 0 100%); --x: 30%; }
@@ -1688,7 +1631,7 @@ table _Medidas
 			@keyframes carrega { 50% { transform: scale(1.06); filter: brightness(1.6) drop-shadow(0 0 16px #fff); } }
 			@keyframes inv-j { 50% { transform: translate(150px, -80px) scale(1.06); } }
 			@keyframes inv-o { 50% { transform: translate(-150px, 80px) scale(1.06); } }
-
+			
 			.hud { position: absolute; top: 60px; width: 384px; height: 70px; box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 16px; background: rgba(8,10,15,.80); border: 1px solid rgba(255,255,255,.14); box-shadow: 0 12px 30px rgba(0,0,0,.45); z-index: 6; }
 			.hud-j { left: 254px; } .hud-o { right: 254px; flex-direction: row-reverse; text-align: right; }
 			.hud-foto { width: 52px; height: 52px; flex: 0 0 auto; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--c) 70%, #fff), color-mix(in srgb, var(--c) 40%, #000)); border: 2px solid rgba(255,255,255,.7); overflow: hidden; display: flex; align-items: center; justify-content: center; }
@@ -1712,7 +1655,7 @@ table _Medidas
 			.hp-f.baixo { background: linear-gradient(90deg, #DC2626, #F87171); animation: pisca 1s steps(2) infinite; }
 			@keyframes pisca { 50% { opacity: .6; } }
 			.hp-tx { margin-top: 3px; font-size: 10px; font-weight: 800; color: #C9CFDA; }
-
+			
 			.carta { position: absolute; top: 60px; width: 222px; height: 644px; box-sizing: border-box; padding: 12px; border-radius: 20px; background: linear-gradient(170deg, color-mix(in srgb, var(--c) 30%, #1B2130), #0F131B 55%); border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); box-shadow: 0 18px 40px rgba(0,0,0,.45); z-index: 6; display: flex; flex-direction: column; gap: 6px; }
 			.carta-j { left: 16px; } .carta-o { right: 16px; }
 			.carta-rot { align-self: center; font-size: 10px; font-weight: 900; letter-spacing: .22em; color: #11151D; background: #fff; padding: 4px 16px; border-radius: 999px; }
@@ -1736,7 +1679,7 @@ table _Medidas
 			.tm.at { border-color: #FFCB05; background: rgba(255,203,5,.08); }
 			.tm.ko { opacity: .35; filter: grayscale(1); }
 			.tm.pode { cursor: pointer; } .tm.pode:hover { border-color: #fff; background: rgba(255,255,255,.10); }
-
+			
 			.msg { position: absolute; left: 254px; right: 254px; top: 498px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.8); z-index: 7; }
 			.msg.nova { animation: msg .35s ease-out; }
 			@keyframes msg { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -1761,7 +1704,7 @@ table _Medidas
 			.log-tit { font-size: 9px; font-weight: 900; letter-spacing: .18em; color: #8A93A3; margin-bottom: 4px; }
 			.log { flex: 1 1 auto; min-height: 0; overflow-y: auto; font-size: 10.5px; line-height: 1.55; color: #C9CFDA; }
 			.log b { color: #fff; } .log i { font-style: normal; } .log .sup { color: #86EFAC; } .log .pou { color: #FDBA74; } .log .crit { color: #FFCB05; }
-
+			
 			/* ================= EFEITOS ================= */
 			.efx { position: absolute; inset: 0; pointer-events: none; z-index: 20; }
 			.treme { animation: treme .35s; } .treme-forte { animation: treme-forte .6s; }
@@ -1821,7 +1764,7 @@ table _Medidas
 			@keyframes intro-dir { from { transform: translateX(100%); } to { transform: none; } }
 			@keyframes vs-in { from { transform: translate(-50%, -50%) scale(4); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
 			@keyframes intro-sai { to { opacity: 0; } }
-
+			
 			/* ================= OVERLAYS ================= */
 			.ov { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; background: rgba(5,7,10,.66); }
 			.ov-box { position: relative; z-index: 2; padding: 22px 28px; border-radius: 22px; background: linear-gradient(160deg, #1E2430, #0E1118); border: 1px solid rgba(255,255,255,.14); box-shadow: 0 24px 60px rgba(0,0,0,.6); display: flex; flex-direction: column; align-items: center; gap: 14px; }
@@ -1841,7 +1784,7 @@ table _Medidas
 			.confete { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 			.confete i { position: absolute; top: -20px; width: 9px; height: 14px; border-radius: 2px; animation-name: confete; animation-iteration-count: infinite; animation-timing-function: linear; }
 			@keyframes confete { 0% { transform: translateY(0) rotate(0); } 100% { transform: translateY(760px) rotate(720deg); } }
-
+			
 			/* ================= MEGA / GIGANTAMAX ================= */
 			.bt-mega { color: #fff; border: 1px solid rgba(255,255,255,.35); animation: pulsa 1.6s ease-in-out infinite; }
 			.bt-mega.mega { background: linear-gradient(90deg, #7C3AED, #EC4899, #F59E0B); }
@@ -1863,11 +1806,39 @@ table _Medidas
 			.banner.mega { background: linear-gradient(90deg, #FF3B3B, #FFB13B, #FFF23B, #4BFF6B, #3BD7FF, #D83BFF); -webkit-background-clip: text; color: transparent; -webkit-text-stroke: 2px #11151D; filter: drop-shadow(0 0 18px rgba(255,255,255,.6)); }
 			.banner.gmax { color: #FF2E63; -webkit-text-stroke: 3px #3B0014; text-shadow: 0 0 34px rgba(255,46,99,.9), 0 6px 0 #3B0014; }
 			"
-			```
 		displayFolder: <HTML>\CSS
 
-	measure '<HTML> Matriz Tipos' = ```
+	measure 'JS Dados' =
+			
+			VAR _pk = CONCATENATEX(
+			    ALL(Pokemon),
+			    "[" & Pokemon[PokemonId] & ",'" & SUBSTITUTE(Pokemon[Nome], "'", "\'") & "'," & Pokemon[SpeciesId]
+			  & ",'" & Pokemon[Tipo1Slug] & "','" & Pokemon[Tipo2Slug] & "',"
+			  & COALESCE(Pokemon[HP], 1) & "," & COALESCE(Pokemon[Ataque], 1) & "," & COALESCE(Pokemon[Defesa], 1) & ","
+			  & COALESCE(Pokemon[AtqEsp], 1) & "," & COALESCE(Pokemon[DefEsp], 1) & "," & COALESCE(Pokemon[Velocidade], 1) & ","
+			  & IF(Pokemon[IsDefault], 1, 0) & "," & COALESCE(Pokemon[Geracao], 0) & "," & IF(Pokemon[Lendario] || Pokemon[Mitico], 1, 0) & "]",
+			    ",", Pokemon[OrdemDex], ASC
+			)
+			VAR _ef = CONCATENATEX(
+			    FILTER(ALL(Eficacia), Eficacia[Fator] <> 1),
+			    "'" & Eficacia[Ataque] & ">" & Eficacia[Defesa] & "':" & FORMAT(Eficacia[Fator], "0.0#", "en-US"),
+			    ","
+			)
+			VAR _gp = CONCATENATEX(
+			    ALL(Golpes),
+			    "['" & Golpes[Tipo] & "','" & Golpes[Categoria] & "','" & Golpes[Papel] & "','" & SUBSTITUTE(Golpes[Nome], "'", "\'")
+			  & "'," & Golpes[Poder] & "," & Golpes[Precisao] & "," & Golpes[Prioridade] & "]",
+			    ","
+			)
+			VAR _tp = CONCATENATEX(ALL(Tipos), Tipos[TipoSlug] & ":['" & Tipos[Tipo] & "','" & Tipos[Cor] & "']", ",", Tipos[Ordem], ASC)
+			VAR _versao = COUNTROWS(ALL(Pokemon)) * 1000 + COUNTROWS(ALL(Golpes))
+			RETURN
+			    "window.ARENA_DADOS={v:" & _versao & ",pk:[" & _pk & "],ef:{" & _ef & "},gp:[" & _gp & "],tp:{" & _tp & "}};"
+		formatString: 0
+		displayFolder: Base
 
+	measure '<HTML> Matriz Tipos' =
+			
 			VAR _dados = [JS Dados]
 			VAR _motor =
 			"/* Base compartilhada das páginas em JavaScript (Arena, Tipos, Quiz).
@@ -1879,7 +1850,7 @@ table _Medidas
 			  var D = window.ARENA_DADOS;
 			  if (!D) { return; }
 			  if (window.PK && window.PK.v === D.v) { return; }
-
+			
 			  var SPR = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/';
 			  var ICO = 'https://raw.githubusercontent.com/partywhale/pokemon-type-icons/main/icons/';
 			  var P = {}, LISTA = [];
@@ -1890,7 +1861,7 @@ table _Medidas
 			    P[p.id] = p; LISTA.push(p);
 			  });
 			  var TIPOS = Object.keys(D.tp);
-
+			
 			  function ef(a, d) { var x = D.ef[a + '>' + d]; return x === undefined ? 1 : x; }
 			  function efTotal(tipo, tiposDef) { return tiposDef.reduce(function (m, d) { return m * ef(tipo, d); }, 1); }
 			  function corTipo(t) { return (D.tp[t] || ['', '#888'])[1]; }
@@ -1947,12 +1918,12 @@ table _Medidas
 			    }
 			    return `<div class='fx fx-${tipo}'>${html}</div>`;
 			  }
-
+			
 			  window.PK = { v: D.v, D: D, P: P, LISTA: LISTA, TIPOS: TIPOS, ef: ef, efTotal: efTotal, corTipo: corTipo,
 			    nomeTipo: nomeTipo, icone: icone, chip: chip, esc: esc, fmtEf: fmtEf, normalizar: normalizar, URL: URL,
 			    img: img, escala: escala, aleatorio: aleatorio, embaralhar: embaralhar, particulas: particulas };
 			})();
-
+			
 			/* Página Tipos: roda de tipos (setas de vantagem), matriz 18x18 e ranking de combinações.
 			   Usa window.PK (comum.js). Não use aspas duplas neste arquivo. */
 			(function () {
@@ -1961,7 +1932,7 @@ table _Medidas
 			  var T = K.TIPOS, icone = K.icone, nomeTipo = K.nomeTipo, corTipo = K.corTipo;
 			  var S = window.__tipos || (window.__tipos = { aba: 'roda', modo: 'ataque', atk: 'fire', def: ['grass'], foco: null });
 			  function $(id) { return document.getElementById(id); }
-
+			
 			  /* ================= RODA ================= */
 			  var CX = 316, CY = 300, R = 238;
 			  function ponto(t) {
@@ -2023,7 +1994,7 @@ table _Medidas
 			        <svg class='roda-svg' width='632' height='600'><defs>${marcas}</defs><circle cx='${CX}' cy='${CY}' r='${R}' class='roda-aro'/><g id='tp-setas'>${setasHtml()}</g></svg>
 			        <div class='roda-centro' id='tp-centro'>${centroHtml()}</div>${nos}</div>`;
 			  }
-
+			
 			  /* ================= MATRIZ ================= */
 			  function matrizHtml() {
 			    var html = `<div class='canto'><span>DEFENSOR →</span><span>ATACANTE ↓</span></div>`;
@@ -2037,7 +2008,7 @@ table _Medidas
 			    });
 			    return `<div class='matriz' id='tp-matriz'>${html}</div>`;
 			  }
-
+			
 			  /* ================= RANKING ================= */
 			  var COMBOS = null;
 			  function combos() {
@@ -2075,7 +2046,7 @@ table _Medidas
 			      <div class='rk-sec'>⚠ MAIS VULNERÁVEIS</div>${piores}
 			      <div class='rk-sec'>⚔ COBERTURA OFENSIVA <em>quantos tipos cada um atinge com dano dobrado</em></div><div class='ofs'>${barras}</div>`;
 			  }
-
+			
 			  /* ================= DETALHE (direita) ================= */
 			  function chips(lista, vazio) { return lista.length ? lista.map(K.chip).join('') : `<span class='vazio'>${vazio}</span>`; }
 			  function detalheHtml() {
@@ -2109,7 +2080,7 @@ table _Medidas
 			    }
 			    return conf + ataque + defesa;
 			  }
-
+			
 			  /* ================= RENDER ================= */
 			  function render() {
 			    var abas = [['roda', '◎ Roda'], ['matriz', '▦ Matriz'], ['ranking', '🏆 Ranking']].map(function (a) {
@@ -2165,11 +2136,10 @@ table _Medidas
 			"
 			RETURN
 			    "<div id='app-raiz'></div><script>" & _dados & "</script><script>" & _motor & "</script>"
-			```
 		displayFolder: <HTML>
 
-	measure '<CSS> Matriz Tipos' = ```
-
+	measure '<CSS> Matriz Tipos' =
+			
 			"#htmlContent { margin: 0; padding: 0; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: #E9ECF2; background: #0B0E14; }
 			.htmlViewerEntry { height: 100vh; }
 			#app-raiz { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: #0B0E14; }
@@ -2191,7 +2161,7 @@ table _Medidas
 			.titulo span { font-size: 10px; color: #8A93A3; font-weight: 600; letter-spacing: .06em; }
 			.vidro { border-radius: 18px; background: linear-gradient(160deg, rgba(30,36,48,.92), rgba(14,17,24,.94)); border: 1px solid rgba(255,255,255,.08); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 18px 40px rgba(0,0,0,.35); }
 			::-webkit-scrollbar { width: 6px; height: 6px; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 6px; } ::-webkit-scrollbar-track { background: transparent; }
-
+			
 			/* partículas de fundo por tipo (iguais às da Pokédex) */
 			.fx { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 			.fx i { position: absolute; display: block; opacity: 0; animation-iteration-count: infinite; animation-timing-function: linear; }
@@ -2230,7 +2200,7 @@ table _Medidas
 			.fx-bug i { width: 5px !important; height: 5px !important; border-radius: 50%; background: #E6F57A; box-shadow: 0 0 10px 3px rgba(200,230,80,.70); animation-name: vagalume; animation-timing-function: ease-in-out; }
 			@keyframes brilhofx { 0%, 100% { transform: scale(0) rotate(0); opacity: 0; } 50% { transform: scale(1.4) rotate(90deg); opacity: 1; } }
 			@keyframes vagalume { 0% { transform: translate(0,0); opacity: 0; } 25% { transform: translate(30px,-20px); opacity: 1; } 50% { transform: translate(-10px,-50px); opacity: .3; } 75% { transform: translate(-40px,-10px); opacity: 1; } 100% { transform: translate(0,0); opacity: 0; } }
-
+			
 			/* controles compartilhados (abas, gerações) */
 			.modos { display: flex; gap: 6px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10); padding: 4px; border-radius: 999px; }
 			.modos span { padding: 6px 16px; border-radius: 999px; font-size: 11px; font-weight: 800; color: #C9CFDA; cursor: pointer; white-space: nowrap; transition: background .12s, color .12s; }
@@ -2241,7 +2211,7 @@ table _Medidas
 			.gc:hover { color: #fff; border-color: rgba(255,255,255,.25); }
 			.gc.on { background: #FFCB05; color: #11151D; border-color: #FFCB05; }
 			.topo { left: 452px; }
-
+			
 			.tipos { background: radial-gradient(circle at 30% 20%, #1A2130, #0B0E14 70%); }
 			.leg span { display: flex; align-items: center; gap: 5px; }
 			.leg i { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
@@ -2294,7 +2264,7 @@ table _Medidas
 			.pk img { width: 52px; height: 52px; image-rendering: pixelated; }
 			.pk span { font-size: 8.5px; font-weight: 700; color: #C9CFDA; max-width: 62px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 			.pk.mais { justify-content: center; font-size: 13px; font-weight: 900; color: #8A93A3; }
-
+			
 			/* ================= ABAS / RODA / RANKING ================= */
 			.tipos .topo { left: 452px; }
 			.abas span { padding: 6px 16px; }
@@ -2350,11 +2320,10 @@ table _Medidas
 			.conf-lado > div { display: flex; }
 			.conf-lado > div img + img { margin-left: -10px; }
 			"
-			```
 		displayFolder: <HTML>\CSS
 
-	measure '<HTML> Quiz' = ```
-
+	measure '<HTML> Quiz' =
+			
 			VAR _dados = [JS Dados]
 			VAR _motor =
 			"/* Base compartilhada das páginas em JavaScript (Arena, Tipos, Quiz).
@@ -2366,7 +2335,7 @@ table _Medidas
 			  var D = window.ARENA_DADOS;
 			  if (!D) { return; }
 			  if (window.PK && window.PK.v === D.v) { return; }
-
+			
 			  var SPR = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/';
 			  var ICO = 'https://raw.githubusercontent.com/partywhale/pokemon-type-icons/main/icons/';
 			  var P = {}, LISTA = [];
@@ -2377,7 +2346,7 @@ table _Medidas
 			    P[p.id] = p; LISTA.push(p);
 			  });
 			  var TIPOS = Object.keys(D.tp);
-
+			
 			  function ef(a, d) { var x = D.ef[a + '>' + d]; return x === undefined ? 1 : x; }
 			  function efTotal(tipo, tiposDef) { return tiposDef.reduce(function (m, d) { return m * ef(tipo, d); }, 1); }
 			  function corTipo(t) { return (D.tp[t] || ['', '#888'])[1]; }
@@ -2434,12 +2403,12 @@ table _Medidas
 			    }
 			    return `<div class='fx fx-${tipo}'>${html}</div>`;
 			  }
-
+			
 			  window.PK = { v: D.v, D: D, P: P, LISTA: LISTA, TIPOS: TIPOS, ef: ef, efTotal: efTotal, corTipo: corTipo,
 			    nomeTipo: nomeTipo, icone: icone, chip: chip, esc: esc, fmtEf: fmtEf, normalizar: normalizar, URL: URL,
 			    img: img, escala: escala, aleatorio: aleatorio, embaralhar: embaralhar, particulas: particulas };
 			})();
-
+			
 			/* Página Quiz: Quem é esse Pokémon? (silhueta, opções ou digitação, dicas, placar).
 			   Usa window.PK (comum.js). Não use aspas duplas neste arquivo. */
 			(function () {
@@ -2449,10 +2418,10 @@ table _Medidas
 			  function $(id) { return document.getElementById(id); }
 			  function lerRecorde() { try { return +(window.localStorage.getItem('pkQuizRecorde') || 0); } catch (e) { return 0; } }
 			  function salvarRecorde(v) { try { window.localStorage.setItem('pkQuizRecorde', String(v)); } catch (e) { /* armazenamento indisponível */ } }
-
+			
 			  var S = window.__quiz || (window.__quiz = { modo: 'opcoes', gens: [], pontos: 0, seq: 0, recorde: lerRecorde(), acertos: 0, total: 0,
 			    hist: [], atual: null, opcoes: [], dicas: 0, fase: 'pergunta', resposta: null, inicio: 0, restante: TEMPO, timer: null });
-
+			
 			  function pool() {
 			    return K.LISTA.filter(function (p) { return p.padrao && (!S.gens.length || S.gens.indexOf(p.gen) >= 0); });
 			  }
@@ -2594,11 +2563,10 @@ table _Medidas
 			"
 			RETURN
 			    "<div id='app-raiz'></div><script>" & _dados & "</script><script>" & _motor & "</script>"
-			```
 		displayFolder: <HTML>
 
-	measure '<CSS> Quiz' = ```
-
+	measure '<CSS> Quiz' =
+			
 			"#htmlContent { margin: 0; padding: 0; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: #E9ECF2; background: #0B0E14; }
 			.htmlViewerEntry { height: 100vh; }
 			#app-raiz { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: #0B0E14; }
@@ -2620,7 +2588,7 @@ table _Medidas
 			.titulo span { font-size: 10px; color: #8A93A3; font-weight: 600; letter-spacing: .06em; }
 			.vidro { border-radius: 18px; background: linear-gradient(160deg, rgba(30,36,48,.92), rgba(14,17,24,.94)); border: 1px solid rgba(255,255,255,.08); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 18px 40px rgba(0,0,0,.35); }
 			::-webkit-scrollbar { width: 6px; height: 6px; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 6px; } ::-webkit-scrollbar-track { background: transparent; }
-
+			
 			/* partículas de fundo por tipo (iguais às da Pokédex) */
 			.fx { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 			.fx i { position: absolute; display: block; opacity: 0; animation-iteration-count: infinite; animation-timing-function: linear; }
@@ -2659,7 +2627,7 @@ table _Medidas
 			.fx-bug i { width: 5px !important; height: 5px !important; border-radius: 50%; background: #E6F57A; box-shadow: 0 0 10px 3px rgba(200,230,80,.70); animation-name: vagalume; animation-timing-function: ease-in-out; }
 			@keyframes brilhofx { 0%, 100% { transform: scale(0) rotate(0); opacity: 0; } 50% { transform: scale(1.4) rotate(90deg); opacity: 1; } }
 			@keyframes vagalume { 0% { transform: translate(0,0); opacity: 0; } 25% { transform: translate(30px,-20px); opacity: 1; } 50% { transform: translate(-10px,-50px); opacity: .3; } 75% { transform: translate(-40px,-10px); opacity: 1; } 100% { transform: translate(0,0); opacity: 0; } }
-
+			
 			/* controles compartilhados (abas, gerações) */
 			.modos { display: flex; gap: 6px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10); padding: 4px; border-radius: 999px; }
 			.modos span { padding: 6px 16px; border-radius: 999px; font-size: 11px; font-weight: 800; color: #C9CFDA; cursor: pointer; white-space: nowrap; transition: background .12s, color .12s; }
@@ -2670,7 +2638,7 @@ table _Medidas
 			.gc:hover { color: #fff; border-color: rgba(255,255,255,.25); }
 			.gc.on { background: #FFCB05; color: #11151D; border-color: #FFCB05; }
 			.topo { left: 452px; }
-
+			
 			.quiz { background: #0B0E14; }
 			.qz-palco { position: absolute; left: 16px; top: 60px; width: 852px; height: 644px; border-radius: 22px; overflow: hidden; background: radial-gradient(circle at 50% 42%, #5AA8FF, #1E5BD8 45%, #0C2C7A 85%); border: 1px solid rgba(255,255,255,.12); box-shadow: 0 18px 40px rgba(0,0,0,.45); }
 			.qz-raios { position: absolute; left: 50%; top: 42%; width: 1500px; height: 1500px; margin: -750px 0 0 -750px; background: repeating-conic-gradient(rgba(255,214,10,.30) 0 7deg, transparent 7deg 18deg); -webkit-mask-image: radial-gradient(circle, #000 10%, transparent 60%); animation: girar 40s linear infinite; }
@@ -2742,11 +2710,10 @@ table _Medidas
 			.qz-zerar { align-self: flex-start; height: 28px; font-size: 11px; }
 			.vazio { font-size: 11px; color: #5C6575; grid-column: 1 / -1; }
 			"
-			```
 		displayFolder: <HTML>\CSS
 
-	measure '<HTML> Safari' = ```
-
+	measure '<HTML> Safari' =
+			
 			VAR _dados = [JS Dados]
 			VAR _motor =
 			"/* Base compartilhada das páginas em JavaScript (Arena, Tipos, Quiz).
@@ -2758,7 +2725,7 @@ table _Medidas
 			  var D = window.ARENA_DADOS;
 			  if (!D) { return; }
 			  if (window.PK && window.PK.v === D.v) { return; }
-
+			
 			  var SPR = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/';
 			  var ICO = 'https://raw.githubusercontent.com/partywhale/pokemon-type-icons/main/icons/';
 			  var P = {}, LISTA = [];
@@ -2769,7 +2736,7 @@ table _Medidas
 			    P[p.id] = p; LISTA.push(p);
 			  });
 			  var TIPOS = Object.keys(D.tp);
-
+			
 			  function ef(a, d) { var x = D.ef[a + '>' + d]; return x === undefined ? 1 : x; }
 			  function efTotal(tipo, tiposDef) { return tiposDef.reduce(function (m, d) { return m * ef(tipo, d); }, 1); }
 			  function corTipo(t) { return (D.tp[t] || ['', '#888'])[1]; }
@@ -2826,12 +2793,12 @@ table _Medidas
 			    }
 			    return `<div class='fx fx-${tipo}'>${html}</div>`;
 			  }
-
+			
 			  window.PK = { v: D.v, D: D, P: P, LISTA: LISTA, TIPOS: TIPOS, ef: ef, efTotal: efTotal, corTipo: corTipo,
 			    nomeTipo: nomeTipo, icone: icone, chip: chip, esc: esc, fmtEf: fmtEf, normalizar: normalizar, URL: URL,
 			    img: img, escala: escala, aleatorio: aleatorio, embaralhar: embaralhar, particulas: particulas };
 			})();
-
+			
 			/* Página Safari: ande pelo mato, encontre Pokémon selvagens e capture com Pokébolas.
 			   Mapa em pixel art estilo GBA desenhado no canvas (sem tileset externo). Usa window.PK (comum.js).
 			   Regras de teste: shiny 1 em 8 (no máximo 2 por sessão) e lendário ~5% (no máximo 1).
@@ -2841,7 +2808,7 @@ table _Medidas
 			  if (!K || !raiz) { return; }
 			  var esc = K.esc, TL = 32, COLS = 30, LINS = 20;
 			  var SHINY = 8, MAX_SHINY = 2, LENDARIO = 0.05, MAX_LENDARIO = 1;
-
+			
 			  /* ================= MAPA ================= */
 			  /* t árvore · . grama · m mato alto · c caminho · a água · r pedra · f flores · H centro · D porta · p placa · x cerca */
 			  var MAPA = [
@@ -2869,7 +2836,7 @@ table _Medidas
 			  function tile(x, y) { return (MAPA[y] || [])[x] || 't'; }
 			  function bloqueia(c) { return 'tarHpx'.indexOf(c) >= 0; }
 			  function ruido(x, y, k) { var n = Math.sin(x * 127.1 + y * 311.7 + k * 74.7) * 43758.5453; return n - Math.floor(n); }
-
+			
 			  /* ================= ESTADO ================= */
 			  var S = window.__safari;
 			  if (!S || !S.v2) {
@@ -2879,7 +2846,7 @@ table _Medidas
 			  }
 			  function $(id) { return document.getElementById(id); }
 			  var BOLAS = { poke: { nome: 'Pokébola', mult: 1, cor: '#E3350D' }, grande: { nome: 'Grande Bola', mult: 1.5, cor: '#2E6FE8' }, ultra: { nome: 'Ultra Bola', mult: 2, cor: '#F2C21B' } };
-
+			
 			  /* ================= PIXEL ART ================= */
 			  function px(c, x, y, w, h, cor) { c.fillStyle = cor; c.fillRect(x, y, w, h); }
 			  function circulo(c, x, y, r, cor) { c.fillStyle = cor; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill(); }
@@ -3028,7 +2995,7 @@ table _Medidas
 			    if (S.tecla && !S.anda && !S.luta) { mover(S.tecla); }
 			    if (window.requestAnimationFrame) { window.__safariLaco = window.requestAnimationFrame(laco); }
 			  }
-
+			
 			  /* ================= MOVIMENTO ================= */
 			  var DIRS = { cima: [0, -1], baixo: [0, 1], esq: [-1, 0], dir: [1, 0] };
 			  function agora() { return window.performance ? window.performance.now() : 0; }
@@ -3051,7 +3018,7 @@ table _Medidas
 			    }
 			    if (ch === 'm') { S.folhas = { x: S.x, y: S.y, t0: t || agora() }; if (Math.random() < 0.13) { encontro(); } }
 			  }
-
+			
 			  /* ================= ENCONTRO / CAPTURA ================= */
 			  function sortearPokemon() {
 			    var base = K.LISTA.filter(function (p) { return p.padrao && (!S.gen || p.gen === S.gen); });
@@ -3139,7 +3106,7 @@ table _Medidas
 			    S.bolsa.fruta--; L.fruta = true; L.texto = `Você jogou uma <b>Fruta Frambo</b>! O ${esc(K.P[L.id].nome)} parece mais calmo.`; render();
 			  }
 			  function fugir() { if (!S.luta || S.luta.fase !== 'menu') { return; } S.luta = null; mensagem('Você fugiu em segurança.'); render(); }
-
+			
 			  /* ================= UI ================= */
 			  function mensagem(txt) { S.msg = txt; var m = $('sf-msg'); if (m) { m.innerHTML = txt; } }
 			  function atualizarTexto() { var t = $('sf-texto'); if (t && S.luta) { t.innerHTML = S.luta.texto || ''; } }
@@ -3199,7 +3166,7 @@ table _Medidas
 			    quadro(agora());
 			    desenharTreinadorCostas();
 			  }
-
+			
 			  /* ================= ENTRADA ================= */
 			  var TECLAS = { ArrowUp: 'cima', ArrowDown: 'baixo', ArrowLeft: 'esq', ArrowRight: 'dir', w: 'cima', s: 'baixo', a: 'esq', d: 'dir', W: 'cima', S: 'baixo', A: 'esq', D: 'dir' };
 			  if (!window.__safariTeclas) {
@@ -3226,7 +3193,7 @@ table _Medidas
 			      case 'gen': S.gen = +el.getAttribute('data-g'); atualizarLado(); break;
 			    }
 			  };
-
+			
 			  window.__safariApi = { chanceCaptura: chanceCaptura, taxaCaptura: taxaCaptura, sortearPokemon: sortearPokemon, mover: mover, tile: tile, encontro: encontro };
 			  if (window.__safariLaco && window.cancelAnimationFrame) { window.cancelAnimationFrame(window.__safariLaco); }
 			  if (S.luta && S.luta.fase !== 'menu') { S.luta.fase = 'menu'; S.luta.texto = 'O que você vai fazer?'; }
@@ -3236,11 +3203,10 @@ table _Medidas
 			"
 			RETURN
 			    "<div id='app-raiz'></div><script>" & _dados & "</script><script>" & _motor & "</script>"
-			```
 		displayFolder: <HTML>
 
-	measure '<CSS> Safari' = ```
-
+	measure '<CSS> Safari' =
+			
 			"#htmlContent { margin: 0; padding: 0; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: #E9ECF2; background: #0B0E14; }
 			.htmlViewerEntry { height: 100vh; }
 			#app-raiz { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: #0B0E14; }
@@ -3262,7 +3228,7 @@ table _Medidas
 			.titulo span { font-size: 10px; color: #8A93A3; font-weight: 600; letter-spacing: .06em; }
 			.vidro { border-radius: 18px; background: linear-gradient(160deg, rgba(30,36,48,.92), rgba(14,17,24,.94)); border: 1px solid rgba(255,255,255,.08); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 18px 40px rgba(0,0,0,.35); }
 			::-webkit-scrollbar { width: 6px; height: 6px; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 6px; } ::-webkit-scrollbar-track { background: transparent; }
-
+			
 			/* partículas de fundo por tipo (iguais às da Pokédex) */
 			.fx { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 			.fx i { position: absolute; display: block; opacity: 0; animation-iteration-count: infinite; animation-timing-function: linear; }
@@ -3301,7 +3267,7 @@ table _Medidas
 			.fx-bug i { width: 5px !important; height: 5px !important; border-radius: 50%; background: #E6F57A; box-shadow: 0 0 10px 3px rgba(200,230,80,.70); animation-name: vagalume; animation-timing-function: ease-in-out; }
 			@keyframes brilhofx { 0%, 100% { transform: scale(0) rotate(0); opacity: 0; } 50% { transform: scale(1.4) rotate(90deg); opacity: 1; } }
 			@keyframes vagalume { 0% { transform: translate(0,0); opacity: 0; } 25% { transform: translate(30px,-20px); opacity: 1; } 50% { transform: translate(-10px,-50px); opacity: .3; } 75% { transform: translate(-40px,-10px); opacity: 1; } 100% { transform: translate(0,0); opacity: 0; } }
-
+			
 			/* controles compartilhados (abas, gerações) */
 			.modos { display: flex; gap: 6px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10); padding: 4px; border-radius: 999px; }
 			.modos span { padding: 6px 16px; border-radius: 999px; font-size: 11px; font-weight: 800; color: #C9CFDA; cursor: pointer; white-space: nowrap; transition: background .12s, color .12s; }
@@ -3312,7 +3278,7 @@ table _Medidas
 			.gc:hover { color: #fff; border-color: rgba(255,255,255,.25); }
 			.gc.on { background: #FFCB05; color: #11151D; border-color: #FFCB05; }
 			.topo { left: 452px; }
-
+			
 			.safari { background: radial-gradient(circle at 40% 30%, #16301F, #0B0E14 70%); }
 			.sf-dica { font-size: 10px; font-weight: 700; color: #8A93A3; }
 			.sf-jogo { position: absolute; left: 16px; top: 60px; width: 960px; height: 640px; border-radius: 18px; overflow: hidden; border: 4px solid #1F2028; box-shadow: 0 0 0 3px #3A4A6B, 0 18px 40px rgba(0,0,0,.55); outline: none; background: #8CCF68; }
@@ -3326,7 +3292,7 @@ table _Medidas
 			.sf-vinheta { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,20,0,.28)); }
 			.sf-msg { position: absolute; left: 14px; right: 14px; bottom: 12px; padding: 10px 18px; border-radius: 10px; background: #F8F8F8; border: 3px solid #304060; box-shadow: inset 0 0 0 2px #A0B8D8, 0 5px 0 rgba(0,0,0,.25); color: #283040; font-size: 13px; font-weight: 700; }
 			.sf-msg b { color: #C83020; }
-
+			
 			/* ---------- transição ---------- */
 			.sf-trans { position: absolute; inset: 0; z-index: 10; animation: sf-pisca .7s steps(2) 1; }
 			.sf-trans i { position: absolute; left: 0; right: 0; height: 25%; background: #05070A; transform: scaleX(0); animation: sf-barra .45s ease-in both; }
@@ -3337,7 +3303,7 @@ table _Medidas
 			.sf-trans i:nth-child(4) { top: 75%; transform-origin: right; animation-delay: .84s; }
 			@keyframes sf-pisca { 0%, 50% { background: rgba(255,255,255,.9); } 25%, 75% { background: rgba(0,0,0,.65); } 100% { background: transparent; } }
 			@keyframes sf-barra { to { transform: scaleX(1); } }
-
+			
 			/* ---------- cena de captura (estilo GBA) ---------- */
 			.sf-luta { position: absolute; inset: 0; z-index: 9; overflow: hidden; animation: sf-abre .5s ease-out; }
 			@keyframes sf-abre { from { clip-path: inset(50% 0 50% 0); } to { clip-path: inset(0 0 0 0); } }
@@ -3418,7 +3384,7 @@ table _Medidas
 			@keyframes sf-abre-b { to { transform: scale(1.8); opacity: 0; filter: brightness(3); } }
 			.sf-estrela { position: absolute; left: 720px; top: 290px; width: 18px; height: 18px; margin: -9px 0 0 -9px; background: #FFE27A; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); z-index: 6; animation: sf-estrela .9s ease-out forwards; }
 			@keyframes sf-estrela { from { transform: rotate(var(--a)) translateY(0) scale(.4); opacity: 1; } to { transform: rotate(var(--a)) translateY(-80px) scale(1.3); opacity: 0; } }
-
+			
 			/* ---------- lado ---------- */
 			.sf-lado { position: absolute; left: 992px; top: 60px; width: 272px; height: 644px; box-sizing: border-box; padding: 14px; display: flex; flex-direction: column; gap: 9px; }
 			.sf-sec { font-size: 10px; font-weight: 900; letter-spacing: .16em; color: #8A93A3; display: flex; justify-content: space-between; align-items: baseline; }
@@ -3448,11 +3414,10 @@ table _Medidas
 			.sf-tc { border-radius: 10px; background: #1A2030; border: 1px solid #283041; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #C9CFDA; cursor: pointer; user-select: none; }
 			.sf-tc:hover { background: #252D40; color: #fff; } .sf-tc:active { background: #FFCB05; color: #11151D; }
 			.vazio { font-size: 11px; color: #5C6575; grid-column: 1 / -1; }
-
+			
 			/* depois da entrada, redesenhar a cena (fruta, bola que falhou) não repete as animações */
 			.sf-luta.fixo, .sf-luta.fixo .sf-mon:not(.suga):not(.escapa):not(.foge), .sf-luta.fixo .sf-tr:not(.joga) { animation: none; }
 			"
-			```
 		displayFolder: <HTML>\CSS
 
 	column Coluna
