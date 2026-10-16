@@ -180,11 +180,12 @@ def navegador(pos_):
                 {"properties": hover, "selector": {"id": "hover"}},
                 {"properties": sel, "selector": {"id": "selected"}}]
     objects = {
-        "layout": [{"properties": {"cellPadding": lit("6L")}}],
+        "layout": [{"properties": {"cellPadding": lit("4L")}}],
         "shape": [{"properties": {"tileShape": lit("'pill'")}}],
         "fill": est({"show": lit("true"), "fillColor": cor("#1A2030"), "transparency": lit("0D")},
                     {"fillColor": cor("#252D40")}, {"fillColor": cor(DESTAQUE)}),
-        "text": est({"show": lit("true"), "fontColor": cor("#C9CFDA"), "fontSize": lit("9D"), "bold": lit("true")},
+        "text": est({"show": lit("true"), "fontColor": cor("#C9CFDA"), "fontSize": lit("9D"), "bold": lit("true"),
+                     "leftMargin": lit("2L"), "rightMargin": lit("2L")},
                     {"fontColor": cor("#FFFFFF")}, {"fontColor": cor("#11151D")}),
         "outline": est({"show": lit("true"), "lineColor": cor("#283041"), "weight": lit("1D")},
                        {"lineColor": cor("#FFFFFF")}, {"lineColor": cor(DESTAQUE)}),
@@ -292,7 +293,7 @@ def main():
             },
         })
         itens = [(pid[-4:] + "0101", html_visual(pos(0, 0, LARGURA, ALTURA, 0), f"<HTML> {medida}", f"<CSS> {medida}")),
-                 (pid[-4:] + "0199", navegador(pos(16, 12, 340, 30, 1000)))]
+                 (pid[-4:] + "0199", navegador(pos(16, 12, 420, 30, 1000)))]
         for sufixo, (posicao, visual, _) in itens:
             nome = PREFIXO + sufixo
             escrever(adir / "visuals" / nome / "visual.json",

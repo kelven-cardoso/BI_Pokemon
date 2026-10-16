@@ -24,7 +24,7 @@ const pk = resp.p.map(p => {
   const suf = p.is_default ? '' : (p.name.startsWith(s.name + '-') ? p.name.slice(s.name.length + 1) : p.name);
   const forma = suf.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ').replace('Gmax', 'Gigantamax');
   return [p.id, forma ? base + ' ' + forma : base, p.pokemon_species_id,
-    ts[0], ts[1] || '', st[1], st[2], st[3], st[4], st[5], st[6], p.is_default ? 1 : 0, s.generation_id];
+    ts[0], ts[1] || '', st[1], st[2], st[3], st[4], st[5], st[6], p.is_default ? 1 : 0, s.generation_id, s.is_legendary || s.is_mythical ? 1 : 0];
 });
 
 function elemento() {
@@ -107,6 +107,8 @@ for (const aba of ['roda', 'ranking']) {
     const L = { id, fruta: false };
     console.log('  captura', P2[id].nome.padEnd(10), 'taxa', String(A.taxaCaptura(P2[id])).padStart(3), '| Poké', Math.round(100 * A.chanceCaptura(L, 'poke')) + '%', '| Ultra', Math.round(100 * A.chanceCaptura(L, 'ultra')) + '%');
   }
-  const cont = {}; for (let i = 0; i < 2000; i++) { const p = A.sortearPokemon(); cont[p.total >= 580 ? 'lendário/forte' : p.total > 500 ? 'evoluído' : 'comum'] = (cont[p.total >= 580 ? 'lendário/forte' : p.total > 500 ? 'evoluído' : 'comum'] || 0) + 1; }
-  console.log('  sorteio de 2000 encontros:', JSON.stringify(cont));
+  const S2 = window.__safari, cont = { shiny: 0, lendario: 0 };
+  for (let i = 0; i < 300; i++) { A.encontro(); if (S2.luta.shiny) cont.shiny++; if (window.PK.P[S2.luta.id].lend) cont.lendario++; S2.luta = null; }
+  console.log('  300 encontros -> shiny:', cont.shiny, '(máx 2) | lendários:', cont.lendario, '(máx 1) | contadores:', S2.shinies, S2.lendarios);
+  console.log('  lendário: taxa', A.taxaCaptura(P2[150]), '| Poké', Math.round(100 * A.chanceCaptura({ id: 150 }, 'poke')) + '% | Ultra', Math.round(100 * A.chanceCaptura({ id: 150 }, 'ultra')) + '%');
 }

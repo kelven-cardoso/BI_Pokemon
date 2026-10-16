@@ -69,7 +69,7 @@
 .mon { position: absolute; display: flex; align-items: flex-end; justify-content: center; z-index: 3; }
 .mon-o { left: 730px; top: 130px; width: 200px; height: 190px; }
 .mon-j { left: 355px; top: 270px; width: 240px; height: 230px; }
-.spr { transform-origin: bottom center; filter: drop-shadow(0 12px 10px rgba(0,0,0,.45)); max-height: 100px; }
+.spr { transform-origin: bottom center; max-width: 110px; filter: drop-shadow(0 12px 10px rgba(0,0,0,.45)); max-height: 100px; }
 .mon-o .spr { transform: scale(1.9); }
 .mon-j .spr { transform: scale(2.3); }
 .entra { animation: entra .7s cubic-bezier(.2,1.4,.4,1) both; }
@@ -237,13 +237,12 @@
 @keyframes confete { 0% { transform: translateY(0) rotate(0); } 100% { transform: translateY(760px) rotate(720deg); } }
 
 /* ================= MEGA / GIGANTAMAX ================= */
-.msg span b { margin: 0 .25em; }
 .bt-mega { color: #fff; border: 1px solid rgba(255,255,255,.35); animation: pulsa 1.6s ease-in-out infinite; }
 .bt-mega.mega { background: linear-gradient(90deg, #7C3AED, #EC4899, #F59E0B); }
 .bt-mega.gmax { background: linear-gradient(90deg, #991B1B, #E11D48, #FB7185); }
 .gmax-t { font-style: normal; font-size: 8.5px; font-weight: 900; letter-spacing: .06em; color: #fff; background: #E11D48; padding: 1px 6px; border-radius: 999px; margin: 0 4px; box-shadow: 0 0 10px rgba(225,29,72,.7); }
-.mon-o.gmax .spr { transform: scale(2.9); }
-.mon-j.gmax .spr { transform: scale(3.3); }
+.mon-o.gmax .spr { transform: scale(2.15); }
+.mon-j.gmax .spr { transform: scale(2.55); }
 .gmax .spr { filter: drop-shadow(0 0 16px rgba(255,40,90,.95)) drop-shadow(0 12px 10px rgba(0,0,0,.45)); }
 .gmax::before { content: ''; position: absolute; left: -70px; right: -70px; top: -90px; bottom: -20px; border-radius: 50%; background: radial-gradient(ellipse at 50% 70%, rgba(255,40,90,.55), rgba(120,0,40,.25) 45%, transparent 70%); filter: blur(6px); animation: nuvem-g 2.2s ease-in-out infinite alternate; }
 @keyframes nuvem-g { from { opacity: .6; transform: scale(.95); } to { opacity: 1; transform: scale(1.06); } }

@@ -5,7 +5,7 @@
     "x": 16,
     "y": 12,
     "z": 1000,
-    "width": 340,
+    "width": 420,
     "height": 30,
     "tabOrder": 1000
   },
@@ -18,7 +18,7 @@
             "cellPadding": {
               "expr": {
                 "Literal": {
-                  "Value": "6L"
+                  "Value": "4L"
                 }
               }
             }
@@ -140,6 +140,20 @@
               "expr": {
                 "Literal": {
                   "Value": "true"
+                }
+              }
+            },
+            "leftMargin": {
+              "expr": {
+                "Literal": {
+                  "Value": "2L"
+                }
+              }
+            },
+            "rightMargin": {
+              "expr": {
+                "Literal": {
+                  "Value": "2L"
                 }
               }
             }

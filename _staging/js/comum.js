@@ -1,6 +1,6 @@
 /* Base compartilhada das páginas em JavaScript (Arena, Tipos, Quiz).
    Lê window.ARENA_DADOS (medida DAX [JS Dados]) e publica window.PK com dados e utilidades.
-     pk: [id, nome, especie, tipo1, tipo2, hp, atk, def, spa, spd, spe, padrao, geracao]
+     pk: [id, nome, especie, tipo1, tipo2, hp, atk, def, spa, spd, spe, padrao, geracao, lendario/mítico]
      ef: { 'ataque>defesa': fator }   gp: golpes   tp: { slug: [nome PT, cor] }
    Não use aspas duplas neste arquivo (ele vira uma string DAX). */
 (function () {
@@ -13,7 +13,7 @@
   var P = {}, LISTA = [];
   D.pk.forEach(function (r) {
     var p = { id: r[0], nome: r[1], esp: r[2], t: r[4] ? [r[3], r[4]] : [r[3]],
-      b: { hp: r[5], atk: r[6], def: r[7], spa: r[8], spd: r[9], spe: r[10] }, padrao: r[11] === 1, gen: r[12] || 0 };
+      b: { hp: r[5], atk: r[6], def: r[7], spa: r[8], spd: r[9], spe: r[10] }, padrao: r[11] === 1, gen: r[12] || 0, lend: r[13] === 1 };
     p.total = p.b.hp + p.b.atk + p.b.def + p.b.spa + p.b.spd + p.b.spe;
     P[p.id] = p; LISTA.push(p);
   });

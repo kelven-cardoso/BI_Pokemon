@@ -56,3 +56,14 @@
 .fx-bug i { width: 5px !important; height: 5px !important; border-radius: 50%; background: #E6F57A; box-shadow: 0 0 10px 3px rgba(200,230,80,.70); animation-name: vagalume; animation-timing-function: ease-in-out; }
 @keyframes brilhofx { 0%, 100% { transform: scale(0) rotate(0); opacity: 0; } 50% { transform: scale(1.4) rotate(90deg); opacity: 1; } }
 @keyframes vagalume { 0% { transform: translate(0,0); opacity: 0; } 25% { transform: translate(30px,-20px); opacity: 1; } 50% { transform: translate(-10px,-50px); opacity: .3; } 75% { transform: translate(-40px,-10px); opacity: 1; } 100% { transform: translate(0,0); opacity: 0; } }
+
+/* controles compartilhados (abas, gerações) */
+.modos { display: flex; gap: 6px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10); padding: 4px; border-radius: 999px; }
+.modos span { padding: 6px 16px; border-radius: 999px; font-size: 11px; font-weight: 800; color: #C9CFDA; cursor: pointer; white-space: nowrap; transition: background .12s, color .12s; }
+.modos span:hover { color: #fff; background: rgba(255,255,255,.06); }
+.modos span.on { background: #FFCB05; color: #11151D; box-shadow: 0 0 14px rgba(255,203,5,.35); }
+.gens { display: flex; gap: 4px; }
+.gc { flex: 1; text-align: center; font-size: 10px; font-weight: 800; padding: 4px 0; border-radius: 999px; cursor: pointer; color: #C9CFDA; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); }
+.gc:hover { color: #fff; border-color: rgba(255,255,255,.25); }
+.gc.on { background: #FFCB05; color: #11151D; border-color: #FFCB05; }
+.topo { left: 452px; }

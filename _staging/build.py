@@ -169,7 +169,7 @@ JS_DADOS = '''VAR _pk = CONCATENATEX(
   & ",'" & Pokemon[Tipo1Slug] & "','" & Pokemon[Tipo2Slug] & "',"
   & COALESCE(Pokemon[HP], 1) & "," & COALESCE(Pokemon[Ataque], 1) & "," & COALESCE(Pokemon[Defesa], 1) & ","
   & COALESCE(Pokemon[AtqEsp], 1) & "," & COALESCE(Pokemon[DefEsp], 1) & "," & COALESCE(Pokemon[Velocidade], 1) & ","
-  & IF(Pokemon[IsDefault], 1, 0) & "," & COALESCE(Pokemon[Geracao], 0) & "]",
+  & IF(Pokemon[IsDefault], 1, 0) & "," & COALESCE(Pokemon[Geracao], 0) & "," & IF(Pokemon[Lendario] || Pokemon[Mitico], 1, 0) & "]",
     ",", Pokemon[OrdemDex], ASC
 )
 VAR _ef = CONCATENATEX(

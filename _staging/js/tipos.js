@@ -18,7 +18,7 @@
     var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, cx = CX + (mx - CX) * 0.35, cy = CY + (my - CY) * 0.35;
     var dx = b.x - cx, dy = b.y - cy, d = Math.hypot(dx, dy) || 1, bx = b.x - dx / d * 28, by = b.y - dy / d * 28;
     var ax = a.x + (cx - a.x) / Math.hypot(cx - a.x, cy - a.y) * 26, ay = a.y + (cy - a.y) / Math.hypot(cx - a.x, cy - a.y) * 26;
-    return `<path class='seta ${cls}' style='animation-delay:${i * 40}ms' marker-end='url(#m-${cls})' d='M${ax.toFixed(1)},${ay.toFixed(1)} Q${cx.toFixed(1)},${cy.toFixed(1)} ${bx.toFixed(1)},${by.toFixed(1)}'/>`;
+    return `<path class='seta ${cls}' pathLength='1' style='animation-delay:${i * 40}ms' marker-end='url(#m-${cls})' d='M${ax.toFixed(1)},${ay.toFixed(1)} Q${cx.toFixed(1)},${cy.toFixed(1)} ${bx.toFixed(1)},${by.toFixed(1)}'/>`;
   }
   function setasHtml() {
     var html = '', i = 0, foco = S.foco;

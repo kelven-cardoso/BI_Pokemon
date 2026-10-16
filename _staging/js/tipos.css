@@ -51,7 +51,7 @@ b.b-sup { color: #F87171; } b.b-pou { color: #4ADE80; } b.b-nul { color: #94A3B8
 .pk.mais { justify-content: center; font-size: 13px; font-weight: 900; color: #8A93A3; }
 
 /* ================= ABAS / RODA / RANKING ================= */
-.tipos .topo { left: 372px; }
+.tipos .topo { left: 452px; }
 .abas span { padding: 6px 16px; }
 .painel-m { padding: 12px 14px; }
 .aba-matriz .matriz { margin-top: 0; }
@@ -63,11 +63,11 @@ b.b-sup { color: #F87171; } b.b-pou { color: #4ADE80; } b.b-nul { color: #94A3B8
 .roda { position: absolute; left: 8px; top: 40px; width: 632px; height: 600px; }
 .roda-svg { position: absolute; left: 0; top: 0; }
 .roda-aro { fill: none; stroke: rgba(255,255,255,.07); stroke-width: 2; stroke-dasharray: 4 6; }
-.seta { fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 600; stroke-dashoffset: 600; animation: desenha .55s ease-out forwards; }
+.seta { fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: desenha .55s ease-out forwards; }
 .seta.sup { stroke: #22C55E; filter: drop-shadow(0 0 4px rgba(34,197,94,.7)); }
 .seta.sup4 { stroke: #86EFAC; stroke-width: 4; filter: drop-shadow(0 0 6px rgba(134,239,172,.9)); }
 .seta.pou { stroke: #EF4444; opacity: .75; }
-.seta.nul { stroke: #94A3B8; stroke-dasharray: 5 6; stroke-dashoffset: 0; animation: aparece .4s ease-out forwards; opacity: 0; }
+.seta.nul { stroke: #94A3B8; stroke-dasharray: .02 .025; stroke-dashoffset: 0; animation: aparece .4s ease-out forwards; opacity: 0; }
 @keyframes desenha { to { stroke-dashoffset: 0; } }
 @keyframes aparece { to { opacity: .9; } }
 .no { position: absolute; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform .15s; z-index: 2; }
