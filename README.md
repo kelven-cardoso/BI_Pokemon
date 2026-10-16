@@ -9,8 +9,9 @@ Relatório Power BI (formato **PBIP**: PBIR + TMDL) que transforma dados públic
 - **Fundo dinâmico por tipo**: bolhas (Água), brasas (Fogo), raios (Elétrico), folhas, neve, almas, ondas psíquicas... tudo em CSS.
 - **Modos Normal / ✨ Shiny / 🃏 Cartas**, com galeria de cartas e prévia holográfica ao passar o mouse.
 - **Evolução clicável** com animação de evolução (silhuetas alternando, raios e clarão) e **formas clicáveis** (Mega X/Y, Gigantamax...).
-- **Arena**: batalhas 1x1 ou Time de 3 com troca de Pokémon, em JavaScript dentro do HTML Content — fórmula de dano oficial (nível 50, STAB, tipos, crítico), IA que escolhe golpes e troca quando o confronto é ruim, intro "VS", efeitos de golpe próprios de cada tipo, previsão de vitória, modo automático e simulação de 1.000 batalhas.
-- **Tipos**: matriz de efetividade 18×18 interativa e calculadora de confronto (ataque × defesa simples ou dupla, com os Pokémon de cada combinação).
+- **Arena**: batalhas 1x1 ou Time de 3 com troca de Pokémon, em JavaScript dentro do HTML Content — fórmula de dano oficial (nível 50, STAB, tipos, crítico), IA que escolhe golpes e troca quando o confronto é ruim, Mega Evolução e Gigantamax, intro "VS", efeitos de golpe próprios de cada tipo, previsão de vitória, modo automático e simulação de 1.000 batalhas.
+- **Tipos**: roda de tipos com setas animadas (ataque e defesa), matriz 18×18, ranking das 171 combinações defensivas e cobertura ofensiva, mais uma calculadora de confronto.
+- **Safari**: minijogo estilo GBA desenhado em canvas — ande pelo mato, encontre Pokémon selvagens (shiny 1 em 50) e capture com Pokébola, Grande Bola, Ultra Bola e Fruta, usando a fórmula de captura da 3ª geração.
 - **Quiz "Quem é esse Pokémon?"**: silhueta, 4 opções ou digitar o nome, cronômetro, dicas, sequência, recorde e filtro por geração.
 - Radar de atributos em SVG, fraquezas/resistências calculadas (até 4× e imunidades), filtros por geração, tipo e lendários.
 
@@ -22,7 +23,7 @@ Relatório Power BI (formato **PBIP**: PBIR + TMDL) que transforma dados públic
 | `Pokemon.Report/` | Relatório (PBIR) gerado pelos scripts |
 | `_staging/m/` | Consultas Power Query (M) |
 | `_staging/dax/medidas.dax` | Medidas DAX (HTML/CSS) |
-| `_staging/js/` | Páginas em JavaScript (`comum`, `arena`, `tipos`, `quiz`) e teste em Node (`teste_arena.js`) |
+| `_staging/js/` | Páginas em JavaScript (`comum`, `arena`, `tipos`, `quiz`, `safari`) e teste em Node (`teste_arena.js`) |
 | `_staging/build.py` | Grava as consultas e medidas no modelo |
 | `_staging/build_report.py` | Monta a página e os visuais |
 

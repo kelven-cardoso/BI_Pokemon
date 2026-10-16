@@ -927,6 +927,38 @@ table _Medidas
 			  function novoLado(ids) { return { time: ids.map(lutador), ativo: 0 }; }
 			  function ativo(l) { return l.time[l.ativo]; }
 			  function vivos(l) { return l.time.filter(function (m) { return m.hp > 0; }); }
+
+			  /* ---------- Mega Evolução e Gigantamax (uma transformação por time) ---------- */
+			  function formasDe(p, tipo) {
+			    var chave = tipo === 'mega' ? ' Mega' : ' Gigantamax';
+			    return LISTA.filter(function (x) { return x.esp === p.esp && !x.padrao && x.nome.indexOf(chave) > 0; });
+			  }
+			  function opcoesTransformar(l) {
+			    var m = ativo(l);
+			    if (l.transformou || m.hp <= 0 || m.base) { return []; }
+			    return formasDe(m.p, 'mega').map(function (f) { return { tipo: 'mega', p: f }; })
+			      .concat(formasDe(m.p, 'gmax').map(function (f) { return { tipo: 'gmax', p: f }; }));
+			  }
+			  function aplicarForma(m, op) {
+			    var razao = m.hp / m.hpMax;
+			    m.base = m.p; m.forma = op.tipo; m.p = op.p; m.st = statusDe(op.p.b); m.hpMax = m.st.hp; m.golpes = golpesDe(op.p);
+			    if (op.tipo === 'gmax') {
+			      m.hpMax *= 2; m.gmax = 3;
+			      m.golpes = m.golpes.map(function (g) { return { t: g.t, c: g.c, papel: g.papel, nome: 'Max ' + nomeTipo(g.t), pw: Math.round(g.pw * 1.3), ac: 0, pr: 0 }; });
+			    }
+			    m.hp = Math.max(1, Math.round(razao * m.hpMax));
+			  }
+			  function desfazerGmax(m) {
+			    var razao = m.hp / m.hpMax, p = m.base;
+			    m.p = p; m.st = statusDe(p.b); m.hpMax = m.st.hp; m.golpes = golpesDe(p); m.gmax = 0; m.base = null; m.forma = null;
+			    m.hp = m.hp <= 0 ? 0 : Math.max(1, Math.round(razao * m.hpMax));
+			  }
+			  function rotuloForma(op) {
+			    if (op.tipo === 'gmax') { return '🔴 Gigantamax'; }
+			    var sufixo = op.p.nome.split(' Mega')[1] || '';
+			    return '💎 Me"
+			& "ga Evoluir' + (sufixo.trim() ? ' ' + sufixo.trim() : '');
+			  }
 			  function efTotal(tipo, alvo) { return K.efTotal(tipo, alvo.t); }
 			  function danoBase(a, d, g) {
 			    var A = g.c === 'F' ? a.st.atk : a.st.spa, Df = g.c === 'F' ? d.st.def : d.st.spd;
@@ -957,8 +989,7 @@ table _Medidas
 			  function iaMelhorReserva(l, foe) {
 			    var melhor = -1, nota = -1e9;
 			    l.time.forEach(function (m, i) {
-			   "
-			& "   if (m.hp <= 0 || i === l.ativo) { return; }
+			      if (m.hp <= 0 || i === l.ativo) { return; }
 			      var v = melhorEsperado(m, foe) / foe.hp - melhorEsperado(foe, m) / m.hp;
 			      if (v > nota) { nota = v; melhor = i; }
 			    });
@@ -1011,7 +1042,8 @@ table _Medidas
 			  var S = window.__arena;
 			  if (!S || S.versao !== D.v) {
 			    S = window.__arena = { versao: D.v, tela: 'selecao', modo: 3, lado: 'j', time: { j: [], o: [] }, busca: '', tipo: '', gen: 0,
-			      B: null, log: [], msg: '', ocupado: false, auto: false, sim: null, previa: null, escolha: null, fim: null };
+			      B: null, log: [], msg: '', ocupado:"
+			& " false, auto: false, sim: null, previa: null, escolha: null, fim: null };
 			  }
 			  function $(id) { return document.getElementById(id); }
 			  function esperar(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
@@ -1038,8 +1070,7 @@ table _Medidas
 			  function filtrados() {
 			    var b = K.normalizar(S.busca);
 			    return LISTA.filter(function (p) {
-			      return (!b || K.normalizar(p.no"
-			& "me).indexOf(b) >= 0 || String(p.esp) === b) && (!S.tipo || p.t.indexOf(S.tipo) >= 0) && (!S.gen || p.gen === S.gen);
+			      return (!b || K.normalizar(p.nome).indexOf(b) >= 0 || String(p.esp) === b) && (!S.tipo || p.t.indexOf(S.tipo) >= 0) && (!S.gen || p.gen === S.gen);
 			    });
 			  }
 			  function gradeHtml() {
@@ -1074,7 +1105,8 @@ table _Medidas
 			      <div class='sel-bg'></div>
 			      <div class='topo'><div class='modos'>
 			        <span class='${S.modo === 1 ? 'on' : ''}' data-acao='modo' data-m='1'>⚔ 1 x 1</span>
-			        <span class='${S.modo === 3 ? 'on' : ''}' data-acao='modo' data-m='3'>🛡 Time de 3</span></div>
+			        <span class='${S.modo === 3 ? 'on' : ''}' data-a"
+			& "cao='modo' data-m='3'>🛡 Time de 3</span></div>
 			        <div class='titulo'><b>ARENA</b><span>monte os times e batalhe</span></div></div>
 			      ${colunaHtml('j', 'SEU TIME')}
 			      <div class='sel-meio'>
@@ -1097,9 +1129,8 @@ table _Medidas
 			    return `<div class='hud hud-${lado}'>
 			      <div class='hud-foto' style='--c:${corTipo(m.p.t[0])}'>${K.img([K.URL.home(m.p.id), K.URL.sprite(m.p.id)])}</div>
 			      <div class='hud-corpo'>
-			        <div class='hud-nome'><b>${esc(m.p.nome)}</b>${m.p.t.map(function (t) { return icone(t, 16); }).join('')}<span>Nv. ${NIVEL}</span>${bolas}</div>
-			        <div class='hp'><div class='hp-fant' id='hpg-${lado}"
-			& "' style='width:${pct}%'></div><div class='hp-f ${hpClasse(m)}' id='hpf-${lado}' style='width:${pct}%'></div></div>
+			        <div class='hud-nome'><b>${esc(m.p.nome)}</b>${m.p.t.map(function (t) { return icone(t, 16); }).join('')}<span>Nv. ${NIVEL}</span>${m.gmax > 0 ? `<em class='gmax-t'>G-MAX ${m.gmax}</em>` : ''}${bolas}</div>
+			        <div class='hp'><div class='hp-fant' id='hpg-${lado}' style='width:${pct}%'></div><div class='hp-f ${hpClasse(m)}' id='hpf-${lado}' style='width:${pct}%'></div></div>
 			        <div class='hp-tx' id='hpt-${lado}'>${m.hp} / ${m.hpMax} HP</div>
 			      </div></div>`;
 			  }
@@ -1129,7 +1160,8 @@ table _Medidas
 			      var tag = e === 0 ? ['nul', 'sem efeito'] : e >= 2 ? ['sup', 'super efetivo ×' + e] : e < 1 ? ['pou', 'pouco efetivo ×' + K.fmtEf(e)] : ['nor', 'normal'];
 			      return `<div class='gp${trava ? ' off' : ''}' data-acao='golpe' data-i='${i}' style='--c:${corTipo(g.t)}'>
 			        <div class='gp-ico'>${icone(g.t, 30)}</div>
-			        <div class='gp-tx'><b>${esc(g.nome)}</b><span>${g.c === 'F' ? 'Físico' : 'Especial'} · Poder ${g.pw} · ${g.ac ? g.ac + '%' : 'nunca erra'}${g.pr > 0 ? ' · ⚡ prioridade' : ''}</span></div>
+			        <div class='gp-tx'><b>${esc(g.nome)}</b><span>${g.c === 'F' ? 'Físico' : 'Especial'} · Poder ${g.pw} · ${g.ac ? g.ac +"
+			& " '%' : 'nunca erra'}${g.pr > 0 ? ' · ⚡ prioridade' : ''}</span></div>
 			        <em class='ef ef-${tag[0]}'>${tag[1]}</em></div>`;
 			    }).join('');
 			  }
@@ -1152,8 +1184,7 @@ table _Medidas
 			    }
 			    if (S.fim) {
 			      var win = S.fim === 'j', conf = '';
-			      if (win) { for (var i = 0; i < 60; i++) { conf += `<i style='left:${(i * 37) % 100}%;background:${corTipo(K.TIPOS[i % 18])};animation-delay:${((i * 13) % 20) / 10}s;animation-duration:${2 + ("
-			& "(i * 7) % 15) / 10}s'></i>`; } }
+			      if (win) { for (var i = 0; i < 60; i++) { conf += `<i style='left:${(i * 37) % 100}%;background:${corTipo(K.TIPOS[i % 18])};animation-delay:${((i * 13) % 20) / 10}s;animation-duration:${2 + ((i * 7) % 15) / 10}s'></i>`; } }
 			      return `<div class='ov'><div class='confete'>${conf}</div><div class='ov-box fim ${win ? 'win' : 'lose'}'>
 			        <div class='fim-tit'>${win ? 'VITÓRIA!' : 'DERROTA'}</div>
 			        <div class='fim-sub'>${win ? 'Seu time venceu a batalha!' : 'O oponente venceu desta vez.'}</div>
@@ -1170,21 +1201,23 @@ table _Medidas
 			      <div class='campo-luz'></div><div class='diag'></div>
 			      <div class='vs'><span>VS</span></div>
 			      <div class='plat plat-o' style='--c:${corTipo(to)}'></div><div class='plat plat-j' style='--c:${corTipo(tj)}'></div>
-			      <div class='mon mon-o' id='mon-o'>${K.img([K.URL.gif(foe.p.id), K.URL.home(foe.p.id)], 'spr')}</div>
-			      <div class='mon mon-j' id='mon-j'>${K.img([K.URL.costas(eu.p.id), K.URL.gif(eu.p.id), K.URL.home(eu.p.id)], 'spr')}</div>
+			      <div class='mon mon-o${foe.gmax > 0 ? ' gmax' : ''}' id='mon-o'>${K.img([K.URL.gif(foe.p.id), K.URL.home(foe.p.id)], 'spr')}</div>
+			      <div class='mon mon-j${eu.gmax > 0 ? ' gmax' : ''}' id='mon-j'>${K.img([K.URL.costas(eu.p.id), K.URL.gif(eu.p.id), K.URL.home(eu.p.id)], 'spr')}</div>
 			      ${barraTopo('j')}${barraTopo('o')}
 			      ${cartaLado('j')}${cartaLado('o')}
-			      <div class='msg' id='ar-msg'>${S.msg || 'O que ' + esc(eu.p.nome) + ' vai fazer?'}</div>
+			      <div class='msg' id='ar-msg'><span>${S.msg || 'O que <b>' + esc(eu.p.nome) + '</b> vai fazer?'}</span></div>
 			      <div id='ar-fx' class='efx'></div>
 			      <div class='painel'>
 			        <div class='gps' id='ar-golpes'>${golpesHtml()}</div>
 			        <div class='acoes'>
+			          ${opcoesTransformar(B.j).map(function (op, i) { return `<div class='bt bt-mega ${op.tipo}${S.ocupado || S.auto || S.fim || S.escolha ? ' off' : ''}' data-acao='transformar' data-i='${i}'>${rotuloForma(op)}</div>`; }).join('')}
 			          <div class='bt bt-sec${S.auto ? ' on' : ''}' data-acao='auto'>${S.auto ? '⏸ Automático' : '▶ Automático'}</div>
 			          <div class='bt bt-gold' data-acao='simular'>🎲 Simular ×1000</div>
 			          <div class='bt bt-sec' data-acao='novo'>Sair</div>
 			          <div class='sim' id='ar-sim'>${simHtml()}</div>
 			        </div>
-			        <div class='logbox'><div class='log-tit'>REGISTRO</div><div class='log' id='ar-log'>${logHtml()}</div></div>
+			        <div class='logbox'><div class='log-tit'>REGISTRO</div><div class='log' i"
+			& "d='ar-log'>${logHtml()}</div></div>
 			      </div>
 			      ${overlayHtml()}
 			    </div>`;
@@ -1199,7 +1232,7 @@ table _Medidas
 			    if (busca) { busca.addEventListener('input', function () { S.busca = busca.value; $('ar-grade').innerHTML = gradeHtml(); }); }
 			  }
 			  function registrar(txt) { S.log.push(txt); var log = $('ar-log'); if (log) { log.innerHTML = logHtml(); log.scrollTop = log.scrollHeight; } }
-			  function mensagem(txt) { S.msg = txt; var m = $('ar-msg'); if (m) { m.innerHTML = txt; m.classList.remove('nova'); void m.offsetWidth; m.classList.add('nova'); } }
+			  function mensagem(txt) { S.msg = txt; var m = $('ar-msg'); if (m) { m.innerHTML = '<span>' + txt + '</span>'; m.classList.remove('nova'); void m.offsetWidth; m.classList.add('nova'); } }
 
 			  /* ================= EFEITOS POR TIPO ================= */
 			  var FX = {
@@ -1217,8 +1250,7 @@ table _Medidas
 			    el.style.setProperty('--c', cor); el.style.setProperty('--dx', dx + 'px'); el.style.setProperty('--dy', dy + 'px');
 			    el.style.animationDuration = dur + 'ms';
 			    if (extra) { extra(el); }
-			    fx.ap"
-			& "pendChild(el); setTimeout(function () { el.remove(); }, dur + 60);
+			    fx.appendChild(el); setTimeout(function () { el.remove(); }, dur + 60);
 			  }
 			  function balancar(forte) {
 			    var pc = $('ar-palco'); if (!pc) { return; }
@@ -1253,7 +1285,8 @@ table _Medidas
 			    } else if (forma === 'pedras') {
 			      for (i = 0; i < 7; i++) { (function (i) { setTimeout(function () { particula('pedra', c.x + (Math.random() * 120 - 60), c.y - 260, cor, 0, 250, 520); }, i * 70); })(i); }
 			    } else if (forma === 'corte') {
-			      for (i = 0; i < 3; i++) { (function (i) { setTimeout(function () { particula('corte', c.x, c.y + (i - 1) * 26, cor, 0, 0, 380, function (el) { el.style.transform = 'translate(-50%,-50%) rotate(' + (-35 + i * 25) + 'deg)'; }); }, i * 80); })(i); }
+			      for (i = 0; i < 3; i++) { (function (i) { setTimeout(function () { particula('corte', c.x,"
+			& " c.y + (i - 1) * 26, cor, 0, 0, 380, function (el) { el.style.transform = 'translate(-50%,-50%) rotate(' + (-35 + i * 25) + 'deg)'; }); }, i * 80); })(i); }
 			    } else if (forma === 'aneis') {
 			      for (i = 0; i < 4; i++) { (function (i) { setTimeout(function () { particula('anel grande', c.x, c.y, cor, 0, 0, 700); }, i * 110); })(i); }
 			    } else if (forma === 'vento') {
@@ -1289,8 +1322,7 @@ table _Medidas
 			  }
 			  function bannerFx(txt, cls) {
 			    var fx = $('ar-fx'); if (!fx) { return; }
-			    var el = document.createEle"
-			& "ment('div'); el.className = 'banner ' + cls; el.textContent = txt;
+			    var el = document.createElement('div'); el.className = 'banner ' + cls; el.textContent = txt;
 			    fx.appendChild(el); setTimeout(function () { el.remove(); }, 1500);
 			  }
 			  async function animarHp(lado, m) {
@@ -1321,7 +1353,8 @@ table _Medidas
 			    if (r.ef >= 2) { bannerFx('SUPER EFETIVO!', 'sup'); registrar(`<i class='sup'>Foi super efetivo! (×${r.ef})</i>`); }
 			    else if (r.ef < 1) { bannerFx('pouco efetivo...', 'pou'); registrar(`<i class='pou'>Não foi muito efetivo...</i>`); }
 			    await animarHp(foe, d);
-			    if (d.hp <= 0) {
+			   "
+			& " if (d.hp <= 0) {
 			      if (mon) { mon.classList.add('desmaio'); }
 			      mensagem(`<b>${esc(d.p.nome)}</b> desmaiou!`); registrar(`<b>${esc(d.p.nome)}</b> desmaiou!`);
 			      await esperar(1000);
@@ -1329,8 +1362,35 @@ table _Medidas
 			    }
 			    return false;
 			  }
+			  async function transformar(lado, op) {
+			    var l = S.B[lado], m = ativo(l), antes = esc(m.p.nome), c = centro(lado);
+			    l.transformou = true;
+			    mensagem(op.tipo === 'mega' ? `<b>${antes}</b> está reagindo à Pedra Chave... está Mega Evoluindo!` : `<b>${antes}</b> está ficando gigante!`);
+			    var mon = $('mon-' + lado); if (mon) { mon.classList.add(op.tipo === 'mega' ? 'mega-anim' : 'gmax-anim'); }
+			    particula(op.tipo === 'mega' ? 'arco' : 'arco gx', c.x, c.y, '#fff', 0, 0, 1500);
+			    await esperar(1500);
+			    particula('flash', 640, 360, op.tipo === 'mega' ? '#FFFFFF' : '#FF2E63', 0, 0, 420);
+			    aplicarForma(m, op);
+			    var depois = esc(m.p.nome);
+			    registrar(op.tipo === 'mega' ? `<i class='crit'>${antes} Mega Evoluiu em ${depois}!</i>` : `<i class='crit'>${antes} usou o Gigantamax! (3 turnos)</i>`);
+			    S.msg = op.tipo === 'mega' ? `<b>${antes}</b> Mega Evoluiu em <b>${depois}</b>!` : `<b>${antes}</b> ficou gigante!`;
+			    render();
+			    bannerFx(op.tipo === 'mega' ? 'MEGA EVOLUÇÃO!' : 'GIGANTAMAX!', op.tipo === 'mega' ? 'mega' : 'gmax');
+			    var mon2 = $('mon-' + lado); if (mon2) { mon2.classList.add('entra'); }
+			    await esperar(1100);
+			  }
+			  async function reverterGmax(lado) {
+			    var m = ativo(S.B[lado]), nome = esc(m.base.nome);
+			    var mon = $('mon-' + lado); if (mon) { mon.classList.add('sai'); }
+			    await esperar(400);
+			    desfazerGmax(m);
+			    S.msg = `<b>${nome}</b> voltou ao tamanho normal.`; registrar(S.msg); render();
+			    var mon2 = $('mon-' + lado); if (mon2) { mon2.classList.add('entra'); }
+			    await esperar(700);
+			  }
 			  async function entrar(lado, idx) {
-			    var B = S.B;
+			    var B = S.B, velho = ativo(B[lado]);
+			    if (velho.gmax > 0) { desfazerGmax(velho); }
 			    B[lado].ativo = idx;
 			    var nome = esc(ativo(B[lado]).p.nome);
 			    S.msg = lado === 'j' ? `Vai, <b>${nome}</b>!` : `O oponente enviou <b>${nome}</b>!`;
@@ -1354,7 +1414,10 @@ table _Medidas
 			  async function executarTurno(acaoJ) {
 			    if (S.ocupado || !S.B || S.fim) { return; }
 			    S.ocupado = true; S.escolha = null; render();
-			    var B = S.B, acoes = ordem(B, acaoJ, iaAcao(B.o, B.j));
+			    var B = S.B;
+			    if (S.auto && opcoesTransformar(B.j).length) { await transformar('j', opcoesTransformar(B.j)[0]); }
+			    if (opcoesTransformar(B.o).length) { await transformar('o', opcoesTransformar(B.o)[0]); }
+			    var acoes = ordem(B, acaoJ, iaAcao(B.o, B.j));
 			    for (var k = 0; k < acoes.length; k++) {
 			      var lado = acoes[k].lado, ac = acoes[k].a;
 			      if (ac.tipo === 'troca') {
@@ -1365,10 +1428,14 @@ table _Medidas
 			      }
 			      if (ativo(B[lado]).hp <= 0) { continue; }
 			      var ko = await usarGolpe(lado, ac.idx);
-			      if (ko) { if (await aposDesmaio(lado === 'j' ? 'o' : 'j')) { return; "
-			& "} break; }
+			      if (ko) { if (await aposDesmaio(lado === 'j' ? 'o' : 'j')) { return; } break; }
 			    }
-			    S.ocupado = false; S.msg = 'O que <b>' + esc(ativo(B.j).p.nome) + '</b> vai fazer?'; render();
+			    for (var lg of ['j', 'o']) {
+			      var mg = ativo(B[lg]);
+			      if (mg.gmax > 0 && mg.hp > 0) { mg.gmax--; if (mg.gmax === 0) { await reverterGmax(lg); } }
+			    }
+			    S.ocupado = false; S.msg ="
+			& " 'O que <b>' + esc(ativo(B.j).p.nome) + '</b> vai fazer?'; render();
 			    if (S.auto) { proximoAuto(); }
 			  }
 			  function proximoAuto() {
@@ -1426,20 +1493,27 @@ table _Medidas
 			        if (S.escolha === 'forcada') { S.escolha = null; S.ocupado = true; entrar('j', i).then(function () { S.ocupado = false; S.msg = 'O que <b>' + esc(ativo(S.B.j).p.nome) + '</b> vai fazer?'; render(); }); }
 			        else { executarTurno({ tipo: 'troca', idx: i }); }
 			        break;
+			      case 'transformar':
+			        var op = opcoesTransformar(S.B.j)[+el.getAttribute('data-i')];
+			        if (op && !S.ocupado) {
+			          S.ocupado = true;
+			          transformar('j', op).then(function () { S.ocupado = false; S.msg = 'O que <b>' + esc(ativo(S.B.j).p.nome) + '</b> vai fazer?'; render(); });
+			        }
+			        break;
 			      case 'auto': S.auto = !S.auto; render(); if (S.auto) { proximoAuto(); } break;
 			      case 'simular':
 			        S.sim = rodarSimulacoes(1000);
 			        registrar(`Simulação: você venceu <b>${S.sim.j.toFixed(1)}%</b> de 1.000 batalhas.`);
-			        var box = $('ar-sim'); if (box) { box.innerHTML = simHtml(); }
+			        var box = $('ar-sim'); if (box) { box.innerHTML = simHt"
+			& "ml(); }
 			        break;
 			      case 'revanche': iniciarBatalha(); break;
 			      case 'novo': S.tela = 'selecao'; S.B = null; S.auto = false; S.fim = null; S.escolha = null; S.ocupado = false; render(); break;
 			    }
 			  };
-			  if (!window.__arenaResize) { window.__arenaResize = true; window.ad"
-			& "dEventListener('resize', function () { K.escala(raiz); }); }
+			  if (!window.__arenaResize) { window.__arenaResize = true; window.addEventListener('resize', function () { K.escala(raiz); }); }
 
-			  window.__arenaApi = { simular: simular, golpesDe: golpesDe, statusDe: statusDe };
+			  window.__arenaApi = { simular: simular, golpesDe: golpesDe, statusDe: statusDe, opcoesTransformar: opcoesTransformar, aplicarForma: aplicarForma, desfazerGmax: desfazerGmax, novoLado: novoLado };
 			  render();
 			  if (S.auto && S.tela === 'batalha' && !S.ocupado) { proximoAuto(); }
 			})();
@@ -1756,6 +1830,28 @@ table _Medidas
 			.confete { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 			.confete i { position: absolute; top: -20px; width: 9px; height: 14px; border-radius: 2px; animation-name: confete; animation-iteration-count: infinite; animation-timing-function: linear; }
 			@keyframes confete { 0% { transform: translateY(0) rotate(0); } 100% { transform: translateY(760px) rotate(720deg); } }
+
+			/* ================= MEGA / GIGANTAMAX ================= */
+			.msg span b { margin: 0 .25em; }
+			.bt-mega { color: #fff; border: 1px solid rgba(255,255,255,.35); animation: pulsa 1.6s ease-in-out infinite; }
+			.bt-mega.mega { background: linear-gradient(90deg, #7C3AED, #EC4899, #F59E0B); }
+			.bt-mega.gmax { background: linear-gradient(90deg, #991B1B, #E11D48, #FB7185); }
+			.gmax-t { font-style: normal; font-size: 8.5px; font-weight: 900; letter-spacing: .06em; color: #fff; background: #E11D48; padding: 1px 6px; border-radius: 999px; margin: 0 4px; box-shadow: 0 0 10px rgba(225,29,72,.7); }
+			.mon-o.gmax .spr { transform: scale(2.9); }
+			.mon-j.gmax .spr { transform: scale(3.3); }
+			.gmax .spr { filter: drop-shadow(0 0 16px rgba(255,40,90,.95)) drop-shadow(0 12px 10px rgba(0,0,0,.45)); }
+			.gmax::before { content: ''; position: absolute; left: -70px; right: -70px; top: -90px; bottom: -20px; border-radius: 50%; background: radial-gradient(ellipse at 50% 70%, rgba(255,40,90,.55), rgba(120,0,40,.25) 45%, transparent 70%); filter: blur(6px); animation: nuvem-g 2.2s ease-in-out infinite alternate; }
+			@keyframes nuvem-g { from { opacity: .6; transform: scale(.95); } to { opacity: 1; transform: scale(1.06); } }
+			.mega-anim { animation: mega-anim 1.5s ease-in-out; }
+			.gmax-anim { animation: gmax-anim 1.5s ease-in-out; }
+			@keyframes mega-anim { 0%, 100% { filter: none; } 10%, 30%, 50%, 70%, 90% { filter: brightness(0) invert(1) drop-shadow(0 0 18px #fff); transform: scale(1.06); } 20%, 40%, 60%, 80% { filter: hue-rotate(180deg) brightness(1.6); transform: scale(.96); } }
+			@keyframes gmax-anim { 0% { transform: scale(1); } 70% { transform: scale(1.5); filter: brightness(1.8) drop-shadow(0 0 30px #FF2E63); } 100% { transform: scale(1.7); filter: brightness(3); opacity: .4; } }
+			.arco { margin: -100px 0 0 -100px; width: 200px; height: 200px; border-radius: 50%; background: conic-gradient(#ff3b3b, #ffb13b, #fff23b, #4bff6b, #3bd7ff, #5b5bff, #d83bff, #ff3b3b); -webkit-mask-image: radial-gradient(circle, transparent 52%, #000 54%, #000 64%, transparent 66%); animation-name: arco; animation-timing-function:"
+			& " ease-in-out; }
+			.arco.gx { background: conic-gradient(#ff2e63, #7a0021, #ff2e63, #ff8fab, #ff2e63); }
+			@keyframes arco { 0% { transform: scale(.3) rotate(0); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: scale(1.7) rotate(600deg); opacity: 0; } }
+			.banner.mega { background: linear-gradient(90deg, #FF3B3B, #FFB13B, #FFF23B, #4BFF6B, #3BD7FF, #D83BFF); -webkit-background-clip: text; color: transparent; -webkit-text-stroke: 2px #11151D; filter: drop-shadow(0 0 18px rgba(255,255,255,.6)); }
+			.banner.gmax { color: #FF2E63; -webkit-text-stroke: 3px #3B0014; text-shadow: 0 0 34px rgba(255,46,99,.9), 0 6px 0 #3B0014; }
 			"
 			```
 		displayFolder: <HTML>\CSS
@@ -1847,102 +1943,209 @@ table _Medidas
 			    img: img, escala: escala, aleatorio: aleatorio, embaralhar: embaralhar, particulas: particulas };
 			})();
 
-			/* Página Tipos: matriz de efetividade 18x18 interativa + calculadora de confronto.
+			/* Página Tipos: roda de tipos (setas de vantagem), matriz 18x18 e ranking de combinações.
 			   Usa window.PK (comum.js). Não use aspas duplas neste arquivo. */
 			(function () {
 			  var K = window.PK, raiz = document.getElementById('app-raiz');
 			  if (!K || !raiz) { return; }
 			  var T = K.TIPOS, icone = K.icone, nomeTipo = K.nomeTipo, corTipo = K.corTipo;
-			  var S = window.__tipos || (window.__tipos = { atk: 'fire', def: ['grass'] });
+			  var S = window.__tipos || (window.__tipos = { aba: 'roda', modo: 'ataque', atk: 'fire', def: ['grass'], foco: null });
 			  function $(id) { return document.getElementById(id); }
 
-			  function celula(a, d) {
-			    var x = K.ef(a, d);
-			    var cls = x > 1 ? 'c2' : x === 0 ? 'c0' : x < 1 ? 'cm' : 'c1';
-			    var txt = x > 1 ? '2' : x === 0 ? '0' : x < 1 ? '½' : '';
-			    var sel = (a === S.atk ? ' ra' : '') + (S.def.indexOf(d) >= 0 ? ' cd' : '');
-			    return `<div class='cel ${cls}${sel}' data-a='${a}' data-d='${d}'>${txt}</div>`;
+			  /* ================= RODA ================= */
+			  var CX = 316, CY = 300, R = 238;
+			  function ponto(t) {
+			    var a = -Math.PI / 2 + 2 * Math.PI * T.indexOf(t) / T.length;
+			    return { x: CX + R * Math.cos(a), y: CY + R * Math.sin(a) };
 			  }
+			  function seta(de, para, cls, i) {
+			    var a = ponto(de), b = ponto(para);
+			    var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, cx = CX + (mx - CX) * 0.35, cy = CY + (my - CY) * 0.35;
+			    var dx = b.x - cx, dy = b.y - cy, d = Math.hypot(dx, dy) || 1, bx = b.x - dx / d * 28, by = b.y - dy / d * 28;
+			    var ax = a.x + (cx - a.x) / Math.hypot(cx - a.x, cy - a.y) * 26, ay = a.y + (cy - a.y) / Math.hypot(cx - a.x, cy - a.y) * 26;
+			    return `<path class='seta ${cls}' style='animation-delay:${i * 40}ms' marker-end='url(#m-${cls})' d='M${ax.toFixed(1)},${ay.toFixed(1)} Q${cx.toFixed(1)},${cy.toFixed(1)} ${bx.toFixed(1)},${by.toFixed(1)}'/>`;
+			  }
+			  function setasHtml() {
+			    var html = '', i = 0, foco = S.foco;
+			    if (S.modo === 'ataque') {
+			      var a = foco || S.atk;
+			      T.forEach(function (d) {
+			        var x = K.ef(a, d);
+			        if (x > 1) { html += seta(a, d, 'sup', i++); } else if (x === 0) { html += seta(a, d, 'nul', i++); } else if (x < 1) { html += seta(a, d, 'pou', i++); }
+			      });
+			    } else {
+			      var def = foco ? [foco] : S.def;
+			      if (!def.length) { return ''; }
+			      T.forEach(function (t) {
+			        var x = K.efTotal(t, def);
+			        if (x > 1) { html += seta(t, def[0], x >= 4 ? 'sup4' : 'sup', i++); } else if (x === 0) { html += seta(t, def[0], 'nul', i++); } else if (x < 1) { html += seta(t, def[0], 'pou', i++); }
+			      });
+			    }
+			    return html;
+			  }
+			  function centroHtml() {
+			    if (S.modo === 'ataque') {
+			      var a = S.foco || S.atk;
+			      var vence = T.filter(function (d) { return K.ef(a, d) > 1; }).length, fraco = T.filter(function (d) { return K.ef(a, d) > 0 && K.ef(a, d) < 1; }).length;
+			      return `<div class='rc-ico'>${icone(a, 64)}</div><b style='color:${corTipo(a)}'>${nomeTipo(a)}</b><span>vence <em class='v'>${vence}</em> · fraco em <em class='f'>${fraco}</em></span>`;
+			    }
+			    var def = S.foco ? [S.foco] : S.def;
+			    if (!def.length) { return `<span>Escolha até 2 tipos na roda</span>`; }
+			    var ameaca = T.filter(function (t) { return K.efTotal(t, def) > 1; }).length, resiste = T.filter(function (t) { return K.efTotal(t, def) < 1; }).length;
+			    return `<div class='rc-ico'>${def.map(function (d) { return icone(d, def.length > 1 ? 48 : 64); }).join('')}</div><b>${def.map(nomeTipo).join(' / ')}</b>
+			      <span>ameaças <em class='f'>${ameaca}</em> · resiste a <em class='v'>${resiste}</em></span>`;
+			  }
+			  function rodaHtml() {
+			    var nos = T.map(function (t) {
+			      var p = ponto(t), on = S.modo === 'ataque' ? t === S.atk : S.def.indexOf(t) >= 0;
+			      return `<div class='no${on ? ' on' : ''}' data-acao='no' data-t='${t}' style='left:${p.x - 25}px;top:${p.y - 25}px;--c:${corTipo(t)}'>${icone(t, 44)}<span>${nomeTipo(t)}</span></div>`;
+			    }).jo"
+			& "in('');
+			    var marcas = [['sup', '#22C55E'], ['sup4', '#86EFAC'], ['pou', '#EF4444'], ['nul', '#94A3B8']].map(function (m) {
+			      return `<marker id='m-${m[0]}' viewBox='0 0 10 10' refX='8' refY='5' markerWidth='6' markerHeight='6' orient='auto-start-reverse'><path d='M0,0 L10,5 L0,10 z' fill='${m[1]}'/></marker>`;
+			    }).join('');
+			    return `<div class='roda-modos modos'><span class='${S.modo === 'ataque' ? 'on' : ''}' data-acao='modoRoda' data-m='ataque'>⚔ Ataque</span>
+			        <span class='${S.modo === 'defesa' ? 'on' : ''}' data-acao='modoRoda' data-m='defesa'>🛡 Defesa</span></div>
+			      <div class='roda-leg'>${S.modo === 'ataque'
+			        ? `<span><i class='l-sup'></i>dano dobrado</span><span><i class='l-pou'></i>metade</span><span><i class='l-nul'></i>sem efeito</span>`
+			        : `<span><i class='l-sup'></i>ameaça (×2)</span><span><i class='l-sup4'></i>ameaça (×4)</span><span><i class='l-pou'></i>resistido</span><span><i class='l-nul'></i>imune</span>`}</div>
+			      <div class='roda'>
+			        <svg class='roda-svg' width='632' height='600'><defs>${marcas}</defs><circle cx='${CX}' cy='${CY}' r='${R}' class='roda-aro'/><g id='tp-setas'>${setasHtml()}</g></svg>
+			        <div class='roda-centro' id='tp-centro'>${centroHtml()}</div>${nos}</div>`;
+			  }
+
+			  /* ================= MATRIZ ================= */
 			  function matrizHtml() {
 			    var html = `<div class='canto'><span>DEFENSOR →</span><span>ATACANTE ↓</span></div>`;
 			    T.forEach(function (d) { html += `<div class='cab cab-d${S.def.indexOf(d) >= 0 ? ' on' : ''}' data-acao='def' data-t='${d}'>${icone(d, 24)}</div>`; });
 			    T.forEach(function (a) {
 			      html += `<div class='cab cab-a${a === S.atk ? ' on' : ''}' data-acao='atk' data-t='${a}'>${icone(a, 24)}</div>`;
-			      T.forEach(function (d) { html += celula(a, d); });
+			      T.forEach(function (d) {
+			        var x = K.ef(a, d), cls = x > 1 ? 'c2' : x === 0 ? 'c0' : x < 1 ? 'cm' : 'c1';
+			        html += `<div class='cel ${cls}${a === S.atk ? ' ra' : ''}${S.def.indexOf(d) >= 0 ? ' cd' : ''}' data-a='${a}' data-d='${d}'>${x > 1 ? '2' : x === 0 ? '0' : x < 1 ? '½' : ''}</div>`;
+			      });
 			    });
-			    return html;
+			    return `<div class='matriz' id='tp-matriz'>${html}</div>`;
 			  }
-			  function chips(lista, vazio) {
-			    return lista.length ? lista.map(K.chip).join('') : `<span class='vazio'>${vazio}</span>`;
+
+			  /* ================= RANKING ================= */
+			  var COMBOS = null;
+			  function combos() {
+			    if (COMBOS) { return COMBOS; }
+			    COMBOS = [];
+			    for (var i = 0; i < T.length; i++) {
+			      for (var j = i; j < T.length; j++) {
+			        var def = i === j ? [T[i]] : [T[i], T[j]];
+			        var xs = T.map(function (t) { return K.efTotal(t, def); });
+			        var fr = xs.filter(function (x) { return x > 1; }).length, x4 = xs.filter(function (x) { return x >= 4; }).length;
+			        var re = xs.filter(function (x) { return x > 0 && x < 1; }).length, im = xs.filter(function (x) { return x === 0; }).length;
+			        var alvo = def.slice().sort().join('|');
+			        var ex = K.LISTA.find(function (p) { return p.padrao && p.t.slice().sort().join('|') === alvo; });
+			        COMBOS.push({ def: def, fr: fr, x4: x4, re: re, im: im, nota: re + im * 1.5 - fr - x4, ex: ex });
+			      }
+			    }
+			    COMBOS.sort(function (a, b) { return b.nota - a.nota || a.fr - b.fr; });
+			    return COMBOS;
 			  }
+			  function linhaCombo(c, i) {
+			    return `<div class='rk' data-acao='combo' data-d='${c.def.join(',')}'>
+			      <span class='rk-pos'>${i}</span><span class='rk-ico'>${c.def.map(function (d) { return icone(d, 26); }).join('')}</span>
+			      <span class='rk-nome'>${c.def.map(nomeTipo).join(' / ')}</span>
+			      <span class='rk-n f'>${c.fr}${c.x4 ? ` <small>(${c.x4}×4)</small>` : ''}</span><span class='rk-n v'>${c.re}</span><span class='rk-n i'>${c.im}</span>
+			      <span class='rk-ex'>${c.ex ? `<img src='${K.URL.sprite(c.ex.id)}' title='${K.esc(c.ex.nome)}'/>` : `<em>sem Pokémon</em>`}</span></div>`;
+			  }
+			  function rankingHtml() {
+			    var cs = combos(), cab = `<div class='rk rk-cab'><span></span><span></span><span>COMBINAÇÃO</span><span>FRAQUEZAS</span><span>RESIST.</span><span>IMUNE</span><span>EXEMPLO</span></div>`;
+			    var melhores = cs.slice(0, 8).map(function (c, i) { "
+			& "return linhaCombo(c, i + 1); }).join('');
+			    var piores = cs.slice(-4).reverse().map(function (c, i) { return linhaCombo(c, cs.length - i); }).join('');
+			    var ofe = T.map(function (a) { return { t: a, n: T.filter(function (d) { return K.ef(a, d) > 1; }).length }; }).sort(function (a, b) { return b.n - a.n; });
+			    var barras = ofe.map(function (o) { return `<div class='of' title='${nomeTipo(o.t)}: dano dobrado em ${o.n} tipos'>${icone(o.t, 22)}<div><i style='height:${o.n * 18}px;background:${corTipo(o.t)}'></i></div><b>${o.n}</b></div>`; }).join('');
+			    return `<div class='rk-sec'>🛡 MELHORES DEFESAS <em>de 171 combinações · clique para analisar</em></div>${cab}${melhores}
+			      <div class='rk-sec'>⚠ MAIS VULNERÁVEIS</div>${piores}
+			      <div class='rk-sec'>⚔ COBERTURA OFENSIVA <em>quantos tipos cada um atinge com dano dobrado</em></div><div class='ofs'>${barras}</div>`;
+			  }
+
+			  /* ================= DETALHE (direita) ================= */
+			  function chips(lista, vazio) { return lista.length ? lista.map(K.chip).join('') : `<span class='vazio'>${vazio}</span>`; }
 			  function detalheHtml() {
 			    var a = S.atk, def = S.def;
-			    /* confronto */
 			    var x = def.length ? K.efTotal(a, def) : 1;
 			    var rot = x >= 4 ? 'EXTREMAMENTE EFETIVO' : x >= 2 ? 'SUPER EFETIVO' : x === 0 ? 'SEM EFEITO' : x < 1 ? 'POUCO EFETIVO' : 'DANO NORMAL';
 			    var cls = x >= 2 ? 'sup' : x === 0 ? 'nul' : x < 1 ? 'pou' : 'nor';
 			    var conf = `<div class='conf conf-${cls}'>
-			      <div class='conf-lado'>${icone(a, 40)}<span>${nomeTipo(a)}</span></div>
+			      <div class='conf-lado'><em>ATAQUE</em>${icone(a, 40)}<span>${nomeTipo(a)}</span></div>
 			      <div class='conf-meio'><b>×${K.fmtEf(x)}</b><span>${rot}</span></div>
-			      <div class='conf-lado'>${def.map(function (d) { return icone(d, 40); }).join('')}<span>${def.map(nomeTipo).join(' / ') || 'escolha'}</span></div></div>`;
-			    /* ataque */
-			    var dobro = T.filter(function (d) { return K.ef(a, d) > 1; });
-			    var metade = T.filter(function (d) { return K.ef(a, d) > 0 && K.ef(a, d) < 1; });
-			    var nada = T.filter(function (d) { return K.ef(a, d) === 0; });
+			      <div class='conf-lado'><em>DEFESA</em><div>${def.map(function (d) { return icone(d, 40); }).join('')}</div><span>${def.map(nomeTipo).join(' / ') || 'escolha'}</span></div></div>`;
+			    var dobro = T.filter(function (d) { return K.ef(a, d) > 1; }), metade = T.filter(function (d) { return K.ef(a, d) > 0 && K.ef(a, d) < 1; }), nada = T.filter(function (d) { return K.ef(a, d) === 0; });
 			    var ataque = `<div class='sec'><div class='sec-tit'><span class='bola' style='background:${corTipo(a)}'></span>ATACANDO COM <b style='color:${corTipo(a)}'>${nomeTipo(a).toUpperCase()}</b></div>
 			      <div class='lin'><em class='rot-sup'>Dano dobrado em</em><div>${chips(dobro, 'nenhum')}</div></div>
 			      <div class='lin'><em class='rot-pou'>Metade do dano em</em><div>${chips(metade, 'nenhum')}</div></div>
 			      <div class='lin'><em class='rot-nul'>Não causa dano em</em><div>${chips(nada, 'nenhum')}</div></div></div>`;
-			    /* defesa */
 			    var defesa = '';
 			    if (def.length) {
 			      var lista = T.map(function (t) { return { t: t, x: K.efTotal(t, def) }; }).sort(function (p, q) { return q.x - p.x || T.indexOf(p.t) - T.indexOf(q.t); });
 			      var barras = lista.map(function (o) {
 			        var c = o.x > 1 ? 'b-sup' : o.x === 0 ? 'b-nul' : o.x < 1 ? 'b-pou' : 'b-nor';
-			        var larg = o.x === 0 ? 100 : Math.min(100, 25 * o.x);
-			        return `<div class='bar'>${icone(o.t, 16)}<span>${nomeTipo(o.t)}</span><div class='bar-t'><i class='${c}' style='width:${larg}%'></i>"
-			& "</div><b class='${c}'>×${K.fmtEf(o.x)}</b></div>`;
+			        return `<div class='bar'>${icone(o.t, 16)}<span>${nomeTipo(o.t)}</span><div class='bar-t'><i class='${c}' style='width:${o.x === 0 ? 100 : Math.min(100, 25 * o.x)}%'></i></div><b class='${c}'>×${K.fmtEf(o.x)}</b></div>`;
 			      }).join('');
-			      var fracos = lista.filter(function (o) { return o.x > 1; }).length, resiste = lista.filter(function (o) { return o.x < 1; }).length;
 			      defesa = `<div class='sec'><div class='sec-tit'>DEFENDENDO COMO <b>${def.map(function (d) { return `<span style='color:${corTipo(d)}'>${nomeTipo(d).toUpperCase()}</span>`; }).join(' / ')}</b>
-			        <em>${fracos} fraquezas · ${resiste} resistências</em></div><div class='bars'>${barras}</div></div>`;
-			      /* pokémon com essa combinação */
+			        <em>${lista.filter(function (o) { return o.x > 1; }).length} fraquezas · ${lista.filter(function (o) { return o.x < 1; }).length} resistências</em></div><div class='bars'>${barras}</div></div>`;
 			      var alvo = def.slice().sort().join('|');
 			      var poks = K.LISTA.filter(function (p) { return p.padrao && p.t.slice().sort().join('|') === alvo; });
-			      var mostra = poks.slice(0, 11).map(function (p) {
-			        return `<div class='pk' title='${K.esc(p.nome)}'><img loading='lazy' src='${K.URL.sprite(p.id)}'/><span>${K.esc(p.nome)}</span></div>`;
-			      }).join('');
 			      defesa += `<div class='sec'><div class='sec-tit'>POKÉMON COM ESSA DEFESA <em>${poks.length} encontrados</em></div>
-			        <div class='pks'>${mostra || `<span class='vazio'>Nenhum Pokémon tem exatamente essa combinação.</span>`}${poks.length > 11 ? `<div class='pk mais'>+${poks.length - 11}</div>` : ''}</div></div>`;
+			        <div class='pks'>${poks.slice(0, 11).map(function (p) { return `<div class='pk' title='${K.esc(p.nome)}'><img loading='lazy' src='${K.URL.sprite(p.id)}'/><span>${K.esc(p.nome)}</span></div>`; }).jo"
+			& "in('') || `<span class='vazio'>Nenhum Pokémon tem exatamente essa combinação.</span>`}${poks.length > 11 ? `<div class='pk mais'>+${poks.length - 11}</div>` : ''}</div></div>`;
 			    }
 			    return conf + ataque + defesa;
 			  }
+
+			  /* ================= RENDER ================= */
 			  function render() {
+			    var abas = [['roda', '◎ Roda'], ['matriz', '▦ Matriz'], ['ranking', '🏆 Ranking']].map(function (a) {
+			      return `<span class='${S.aba === a[0] ? 'on' : ''}' data-acao='aba' data-a='${a[0]}'>${a[1]}</span>`;
+			    }).join('');
+			    var corpo = S.aba === 'roda' ? rodaHtml() : S.aba === 'matriz' ? matrizHtml() : rankingHtml();
 			    raiz.innerHTML = `<div class='pk-palco tipos'>
-			      <div class='topo'><div class='leg'><span><i class='c2'></i>Dano dobrado</span><span><i class='cm'></i>Metade</span><span><i class='c0'></i>Sem efeito</span><span><i class='c1'></i>Normal</span></div>
-			        <div class='titulo'><b>TIPOS</b><span>quem ganha de quem</span></div></div>
-			      <div class='painel-m vidro'><div class='pm-tit'>MATRIZ DE EFETIVIDADE <em>clique numa linha para o atacante e em até 2 colunas para o defensor</em></div>
-			        <div class='matriz' id='tp-matriz'>${matrizHtml()}</div></div>
+			      <div class='topo'><div class='modos abas'>${abas}</div><div class='titulo'><b>TIPOS</b><span>quem vence quem</span></div></div>
+			      <div class='painel-m vidro aba-${S.aba}'>${corpo}</div>
 			      <div class='painel-d vidro' id='tp-det'>${detalheHtml()}</div></div>`;
 			    K.escala(raiz);
 			    var m = $('tp-matriz');
-			    m.onmouseover = function (ev) {
-			      var c = ev.target.closest('.cel'); if (!c) { return; }
-			      var a = c.getAttribute('data-a'), d = c.getAttribute('data-d');
-			      m.querySelectorAll('.hl').forEach(function (x) { x.classList.remove('hl'); });
-			      m.querySelectorAll(`.cel[data-a='${a}'], .cel[data-d='${d}']`).forEach(function (x) { x.classList.add('hl'); });
-			    };
-			    m.onmouseleave = function () { m.querySelectorAll('.hl').forEach(function (x) { x.classList.remove('hl'); }); };
+			    if (m) {
+			      m.onmouseover = function (ev) {
+			        var c = ev.target.closest('.cel'); if (!c) { return; }
+			        m.querySelectorAll('.hl').forEach(function (x) { x.classList.remove('hl'); });
+			        m.querySelectorAll(`.cel[data-a='${c.getAttribute('data-a')}'], .cel[data-d='${c.getAttribute('data-d')}']`).forEach(function (x) { x.classList.add('hl'); });
+			      };
+			      m.onmouseleave = function () { m.querySelectorAll('.hl').forEach(function (x) { x.classList.remove('hl'); }); };
+			    }
+			    var roda = raiz.querySelector('.roda');
+			    if (roda) {
+			      roda.onmouseover = function (ev) {
+			        var no = ev.target.closest('.no'); var t = no ? no.getAttribute('data-t') : null;
+			        if (t === S.foco) { return; }
+			        S.foco = t; $('tp-setas').innerHTML = setasHtml(); $('tp-centro').innerHTML = centroHtml();
+			      };
+			      roda.onmouseleave = function () { S.foco = null; $('tp-setas').innerHTML = setasHtml(); $('tp-centro').innerHTML = centroHtml(); };
+			    }
+			  }
+			  function alternarDef(t) {
+			    var i = S.def.indexOf(t);
+			    if (i >= 0) { S.def.splice(i, 1); } else { S.def.push(t); if (S.def.length > 2) { S.def.shift(); } }
 			  }
 			  raiz.onclick = function (ev) {
 			    var cel = ev.target.closest('.cel');
 			    if (cel) { S.atk = cel.getAttribute('data-a'); S.def = [cel.getAttribute('data-d')]; render(); return; }
 			    var el = ev.target.closest('[data-acao]'); if (!el) { return; }
 			    var t = el.getAttribute('data-t');
-			    if (el.getAttribute('data-acao') === 'atk') { S.atk = t; }
-			    else {
-			      var i = S.def.indexOf(t);
-			      if (i >= 0) { S.def.splice(i, 1); } else { S.def.push(t); if (S.def.length > 2) { S.def.shift(); } }
+			    switch (el.getAttribute('data-acao')) {
+			      case 'aba': S.aba = el.getAttribute('data-a'); S.foco = null; break;
+			      case 'modoRoda': S.modo = el.getAttribute('data-m'); S.foco = null; break;
+			      case 'no': if (S.modo === 'ataque') { S.atk = t; } else { alternarDef(t); } S.foco = null; break;
+			      case 'atk': S.atk = t; break;
+			      case 'def': alternarDef(t); break;
+			      case 'combo': S.def = el.getAttribute('data-d').split(','); S.modo = 'defesa'; break;
 			    }
 			    render();
 			  };
@@ -2019,7 +2222,6 @@ table _Medidas
 			@keyframes vagalume { 0% { transform: translate(0,0); opacity: 0; } 25% { transform: translate(30px,-20px); opacity: 1; } 50% { transform: translate(-10px,-50px); opacity: .3; } 75% { transform: translate(-40px,-10px); opacity: 1; } 100% { transform: translate(0,0); opacity: 0; } }
 
 			.tipos { background: radial-gradient(circle at 30% 20%, #1A2130, #0B0E14 70%); }
-			.leg { display: flex; gap: 14px; font-size: 10px; font-weight: 700; color: #C9CFDA; }
 			.leg span { display: flex; align-items: center; gap: 5px; }
 			.leg i { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
 			.painel-m { position: absolute; left: 16px; top: 60px; width: 648px; height: 644px; box-sizing: border-box; padding: 14px; }
@@ -2047,9 +2249,9 @@ table _Medidas
 			.conf-lado img + img { margin-left: -10px; }
 			.conf-lado:last-child { flex-direction: column; }
 			.conf-meio { text-align: center; }
-			.conf-meio b { display: block; font-size: 40px; font-weight: 900; font-style: itali"
-			& "c; line-height: 1; }
-			.conf-meio span { font-size: 10px; font-weight: 900; letter-spacing: .14em; }
+			.conf-meio b { display: block; font-size: 40px; font-weight: 900; font-style: italic; line-height: 1; }
+			.conf-meio span { font-size: 10px; font-weight: 900; letter-spaci"
+			& "ng: .14em; }
 			.conf-sup .conf-meio { color: #4ADE80; text-shadow: 0 0 20px rgba(74,222,128,.5); }
 			.conf-pou .conf-meio { color: #F87171; } .conf-nul .conf-meio { color: #8A93A3; } .conf-nor .conf-meio { color: #E9ECF2; }
 			.sec { display: flex; flex-direction: column; gap: 7px; }
@@ -2071,6 +2273,61 @@ table _Medidas
 			.pk img { width: 52px; height: 52px; image-rendering: pixelated; }
 			.pk span { font-size: 8.5px; font-weight: 700; color: #C9CFDA; max-width: 62px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 			.pk.mais { justify-content: center; font-size: 13px; font-weight: 900; color: #8A93A3; }
+
+			/* ================= ABAS / RODA / RANKING ================= */
+			.tipos .topo { left: 372px; }
+			.abas span { padding: 6px 16px; }
+			.painel-m { padding: 12px 14px; }
+			.aba-matriz .matriz { margin-top: 0; }
+			.roda-modos { position: absolute; left: 16px; top: 14px; z-index: 3; }
+			.roda-leg { position: absolute; right: 16px; top: 20px; display: flex; gap: 12px; font-size: 10px; font-weight: 700; color: #C9CFDA; z-index: 3; }
+			.roda-leg span { display: flex; align-items: center; gap: 5px; }
+			.roda-leg i { width: 16px; height: 3px; border-radius: 3px; display: inline-block; }
+			.l-sup { background: #22C55E; } .l-sup4 { background: #86EFAC; height: 5px !important; } .l-pou { background: #EF4444; } .l-nul { background: #94A3B8; }
+			.roda { position: absolute; left: 8px; top: 40px; width: 632px; height: 600px; }
+			.roda-svg { position: absolute; left: 0; top: 0; }
+			.roda-aro { fill: none; stroke: rgba(255,255,255,.07); stroke-width: 2; stroke-dasharray: 4 6; }
+			.seta { fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 600; stroke-dashoffset: 600; animation: desenha .55s ease-out forwards; }
+			.seta.sup { stroke: #22C55E; filter: drop-shadow(0 0 4px rgba(34,197,94,.7)); }
+			.seta.sup4 { stroke: #86EFAC; stroke-width: 4; filter: drop-shadow(0 0 6px rgba(134,239,172,.9)); }
+			.seta.pou { stroke: #EF4444; opacity: .75; }
+			.seta.nul { stroke: #94A3B8; stroke-dasharray: 5 6; stroke-dashoffset: 0; animation: aparece .4s ease-out forwards; opacity: 0; }
+			@keyframes desenha { to { stroke-dashoffset: 0; } }
+			@keyframes aparece { to { opacity: .9; } }
+			.no { position: absolute; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform .15s; z-index: 2; }
+			.no img { filter: drop-shadow(0 4px 8px rgba(0,0,0,.5)); }
+			.no span { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); font-size: 9.5px; font-weight: 800; color: #C9CFDA; white-space: nowrap; }
+			.no:hover { transform: scale(1.18); }
+			.no.on { box-shadow: 0 0 0 3px #fff, 0 0 24px var(-"
+			& "-c); }
+			.no.on span { color: #fff; }
+			.roda-centro { position: absolute; left: 216px; top: 200px; width: 200px; height: 200px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; background: radial-gradient(circle, rgba(30,36,48,.95), rgba(14,17,24,.95)); border: 1px solid rgba(255,255,255,.10); box-shadow: 0 0 40px rgba(0,0,0,.5); z-index: 1; }
+			.rc-ico { display: flex; gap: 4px; }
+			.roda-centro b { font-size: 18px; font-weight: 900; color: #fff; }
+			.roda-centro span { font-size: 10.5px; color: #8A93A3; font-weight: 700; }
+			.roda-centro em { font-style: normal; font-weight: 900; }
+			.roda-centro em.v { color: #4ADE80; } .roda-centro em.f { color: #F87171; }
+			.rk-sec { font-size: 11px; font-weight: 900; letter-spacing: .14em; color: #fff; margin: 4px 0 6px; display: flex; gap: 8px; align-items: baseline; }
+			.rk-sec em { font-style: normal; letter-spacing: 0; font-size: 10px; font-weight: 600; color: #737C8C; }
+			.rk { display: grid; grid-template-columns: 24px 62px 1fr 78px 56px 50px 50px; align-items: center; gap: 6px; height: 34px; padding: 0 8px; margin-bottom: 3px; border-radius: 10px; background: rgba(255,255,255,.04); cursor: pointer; transition: background .12s; }
+			.rk:hover { background: rgba(255,255,255,.10); }
+			.rk-cab { height: 18px; background: none; cursor: default; font-size: 8.5px; font-weight: 900; letter-spacing: .12em; color: #5C6575; }
+			.rk-cab:hover { background: none; }
+			.rk-pos { font-size: 11px; font-weight: 900; color: #8A93A3; }
+			.rk-ico { display: flex; } .rk-ico img + img { margin-left: -6px; }
+			.rk-nome { font-size: 12px; font-weight: 800; color: #fff; }
+			.rk-n { font-size: 13px; font-weight: 900; text-align: center; } .rk-n small { font-size: 9px; }
+			.rk-n.f { color: #F87171; } .rk-n.v { color: #4ADE80; } .rk-n.i { color: #CBD5E1; }
+			.rk-ex { display: flex; justify-content: center; } .rk-ex img { width: 34px; height: 34px; image-rendering: pixelated; } .rk-ex em { font-size: 8px; color: #5C6575; font-style: normal; }
+			.ofs { display: flex; justify-content: space-between; align-items: flex-end; height: 130px; padding: 0 4px; }
+			.of { display: flex; flex-direction: column-reverse; align-items: center; gap: 3px; }
+			.of div { width: 14px; display: flex; align-items: flex-end; }
+			.of i { display: block; width: 14px; border-radius: 4px 4px 0 0; animation: sobe-b .6s ease-out both; transform-origin: bottom; }
+			.of b { font-size: 10px; color: #fff; }
+			@keyframes sobe-b { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+			.conf-lado em { font-style: normal; font-size: 8.5px; font-weight: 900; letter-spacing: .16em; color: #5C6575; }
+			.conf-lado > div { display: flex; }
+			.conf-lado > div img + img { margin-left: -10px; }
 			"
 			```
 		displayFolder: <HTML>\CSS
@@ -2452,6 +2709,587 @@ table _Medidas
 			.qz-h.erro { border-color: rgba(248,113,113,.5); } .qz-h.erro i { color: #F87171; }
 			.qz-zerar { align-self: flex-start; height: 28px; font-size: 11px; }
 			.vazio { font-size: 11px; color: #5C6575; grid-column: 1 / -1; }
+			"
+			```
+		displayFolder: <HTML>\CSS
+
+	measure '<HTML> Safari' = ```
+
+			VAR _dados = [JS Dados]
+			VAR _motor =
+			"/* Base compartilhada das páginas em JavaScript (Arena, Tipos, Quiz).
+			   Lê window.ARENA_DADOS (medida DAX [JS Dados]) e publica window.PK com dados e utilidades.
+			     pk: [id, nome, especie, tipo1, tipo2, hp, atk, def, spa, spd, spe, padrao, geracao]
+			     ef: { 'ataque>defesa': fator }   gp: golpes   tp: { slug: [nome PT, cor] }
+			   Não use aspas duplas neste arquivo (ele vira uma string DAX). */
+			(function () {
+			  var D = window.ARENA_DADOS;
+			  if (!D) { return; }
+			  if (window.PK && window.PK.v === D.v) { return; }
+
+			  var SPR = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/';
+			  var ICO = 'https://raw.githubusercontent.com/partywhale/pokemon-type-icons/main/icons/';
+			  var P = {}, LISTA = [];
+			  D.pk.forEach(function (r) {
+			    var p = { id: r[0], nome: r[1], esp: r[2], t: r[4] ? [r[3], r[4]] : [r[3]],
+			      b: { hp: r[5], atk: r[6], def: r[7], spa: r[8], spd: r[9], spe: r[10] }, padrao: r[11] === 1, gen: r[12] || 0 };
+			    p.total = p.b.hp + p.b.atk + p.b.def + p.b.spa + p.b.spd + p.b.spe;
+			    P[p.id] = p; LISTA.push(p);
+			  });
+			  var TIPOS = Object.keys(D.tp);
+
+			  function ef(a, d) { var x = D.ef[a + '>' + d]; return x === undefined ? 1 : x; }
+			  function efTotal(tipo, tiposDef) { return tiposDef.reduce(function (m, d) { return m * ef(tipo, d); }, 1); }
+			  function corTipo(t) { return (D.tp[t] || ['', '#888'])[1]; }
+			  function nomeTipo(t) { return (D.tp[t] || [t])[0]; }
+			  function icone(t, tam) {
+			    return `<img class='pk-ico' src='${ICO + t}.svg' title='${nomeTipo(t)}' style='width:${tam || 18}px;height:${tam || 18}px'/>`;
+			  }
+			  function chip(t) {
+			    return `<span class='pk-chip' style='--c:${corTipo(t)}'>${icone(t, 14)}${nomeTipo(t)}</span>`;
+			  }
+			  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/'/g, '&#39;'); }
+			  function fmtEf(x) { return x === 0.5 ? '½' : x === 0.25 ? '¼' : String(x); }
+			  function normalizar(s) {
+			    return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+			  }
+			  var URL = {
+			    sprite: function (id) { return SPR + id + '.png'; },
+			    gif: function (id) { return SPR + 'other/showdown/' + id + '.gif'; },
+			    costas: function (id) { return SPR + 'other/showdown/back/' + id + '.gif'; },
+			    home: function (id) { return SPR + 'other/home/' + id + '.png'; },
+			    arte: function (id) { return SPR + 'other/official-artwork/' + id + '.png'; }
+			  };
+			  /* <img> com cadeia de reserva: se a URL falhar, tenta a próxima */
+			  function img(urls, cls, extra) {
+			    return `<img class='${cls || ''}' src='${urls[0]}' data-alt='${urls.slice(1).join('|')}' onerror='pkImgErro(this)' ${extra || ''}/>`;
+			  }
+			  window.pkImgErro = function (el) {
+			    var alts = (el.getAttribute('data-alt') || '').split('|').filter(Boolean);
+			    if (!alts.length) { el.onerror = null; el.style.visibility = 'hidden'; return; }
+			    el.setAttribute('data-alt', alts.slice(1).join('|'));
+			    el.src = alts[0];
+			  };
+			  /* palco fixo de 1280x720 escalado para caber no visual */
+			  function escala(raiz) {
+			    var palco = raiz.querySelector('.pk-palco');
+			    if (!palco) { return; }
+			    var w = raiz.clientWidth || window.innerWidth, h = raiz.clientHeight || window.innerHeight;
+			    var s = Math.min(w / 1280, h / 720);
+			    palco.style.transform = 'translate(' + ((w - 1280 * s) / 2) + 'px,' + ((h - 720 * s) / 2) + 'px) scale(' + s + ')';
+			  }
+			  function aleatorio(lista) { return lista[Math.floor(Math.random() * lista.length)]; }
+			  function embaralhar(lista) {
+			    var a = lista.slice();
+			    for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; }
+			    return a;
+			  }
+			  /* partículas de fundo por tipo (mesmas classes .fx-<tipo> da Pokédex) */
+			  function particulas(tipo, n, semente) {
+			    var html = '';
+			    for (var i = 1; i <= n; i++) {
+			      var k = i + (semente || 0);
+			      html += `<i style='left:${(k * 37 + 11) % 100}%;top:${(k * 53 + 7) % 100}%;width:${4 + (k * 7) % 10}px;height:${4 + (k * 7) % 10}px;anim"
+			& "ation-duration:${(5 + ((k * 13) % 60) / 10).toFixed(1)}s;animation-delay:-${(((k * 29) % 80) / 10).toFixed(1)}s'></i>`;
+			    }
+			    return `<div class='fx fx-${tipo}'>${html}</div>`;
+			  }
+
+			  window.PK = { v: D.v, D: D, P: P, LISTA: LISTA, TIPOS: TIPOS, ef: ef, efTotal: efTotal, corTipo: corTipo,
+			    nomeTipo: nomeTipo, icone: icone, chip: chip, esc: esc, fmtEf: fmtEf, normalizar: normalizar, URL: URL,
+			    img: img, escala: escala, aleatorio: aleatorio, embaralhar: embaralhar, particulas: particulas };
+			})();
+
+			/* Página Safari: ande pelo mato, encontre Pokémon selvagens e capture com Pokébolas.
+			   Mapa em pixel art desenhado no canvas (sem tileset externo). Usa window.PK (comum.js).
+			   O estado fica em window.__safari. Não use aspas duplas neste arquivo. */
+			(function () {
+			  var K = window.PK, raiz = document.getElementById('app-raiz');
+			  if (!K || !raiz) { return; }
+			  var esc = K.esc, TL = 32, COLS = 30, LINS = 20, SHINY = 50;
+
+			  /* ================= MAPA ================= */
+			  /* t árvore · . grama · m mato alto · c caminho · a água · r pedra · f flores · H centro · D porta · p placa */
+			  var MAPA = [
+			    'tttttttttttttttttttttttttttttt',
+			    't....mmmmm....cc....mmmmmmm..t',
+			    't..mmmmmmmm...cc...mmmmmmmmm.t',
+			    't..mmmmmmmm...cc...mmmmmmmmm.t',
+			    't...mmmmmm..f.cc.f..mmmmmmm..t',
+			    't.ff.........ccc.........ff..t',
+			    't.ff..HHHH....cc..raaaaar....t',
+			    't.....HHHH....cc..aaaaaaa..mmt',
+			    't.....HHDH....cc..aaaaaaa..mmt',
+			    't.......cc....cc..raaaaar..mmt',
+			    'tcccccccccccccccccccccccccccct',
+			    't.....mmmmm...cc....f..mmmmm.t',
+			    't..mmmmmmmmm..cc...ff.mmmmmmmt',
+			    't..mmmmmmmmm..cc.......mmmmmmt',
+			    't..mmmmmmmmm..cc..p....mmmmmmt',
+			    't...mmmmmmm...cc.......mmmmm.t',
+			    't.r...........cc..ttt.......ft',
+			    't..ff..mmmm...cc..ttt..mmm..ft',
+			    't..ff..mmmm...cc.......mmm...t',
+			    'tttttttttttttttttttttttttttttt'
+			  ].map(function (l) { return (l + '..............................').slice(0, COLS).split(''); });
+			  function tile(x, y) { return (MAPA[y] || [])[x] || 't'; }
+			  function bloqueia(c) { return 'tarHp'.indexOf(c) >= 0; }
+			  function ruido(x, y, k) { var n = Math.sin(x * 127.1 + y * 311.7 + k * 74.7) * 43758.5453; return n - Math.floor(n); }
+
+			  /* ================= ESTADO ================= */
+			  var S = window.__safari;
+			  if (!S) {
+			    S = window.__safari = { x: 14, y: 10, dir: 'baixo', passo: 0, anda: null, gen: 0, msg: 'Clique no mapa e use as setas (ou WASD) para andar. O mato alto esconde Pokémon!',
+			      bolsa: { poke: 10, grande: 5, ultra: 3, fruta: 3 }, caixa: [], enc: 0, fugas: 0, shinies: 0, luta: null, tecla: null };
+			  }
+			  function $(id) { return document.getElementById(id); }
+			  var BOLAS = { poke: { nome: 'Pokébola', mult: 1, cor: '#E3350D' }, grande: { nome: 'Grande Bola', mult: 1.5, cor: '#2E6FE8' }, ultra: { nome: 'Ultra Bola', mult: 2, cor: '#F2C21B' } };
+
+			  /* ================= DESENHO ================= */
+			  function px(c, x, y, w, h, cor) { c.fillStyle = cor; c.fillRect(x, y, w, h); }
+			  function desenharGrama(c, X, Y, x, y) {
+			    px(c, X, Y, TL, TL, '#7CC855');
+			    for (var i = 0; i < 5; i++) { px(c, X + Math.floor(ruido(x, y, i) * 28), Y + Math.floor(ruido(y, x, i) * 28), 3, 2, i % 2 ? '#6AB447' : '#93D86B'); }
+			  }
+			  function desenharTile(c, x, y, t) {
+			    var X = x * TL, Y = y * TL, ch = tile(x, y), i;
+			    if (ch === 'c' || ch === 'D') {
+			      px(c, X, Y, TL, TL, '#E8D29A');
+			      for (i = 0; i < 4; i++) { px(c, X + Math.floor(ruido(x, y, i) * 28), Y + Math.floor(ruido(y, x, i + 3) * 28), 3, 3, '#D4BC80'); }
+			      if (ch === 'D') { px(c, X + 6, Y, 20, 24, '#4A3220'); px(c, X + 8, Y + 2, 16, 22, '#7A5634'); px(c, X + 20, Y + 12, 2, 2, '#F2C21B'); }
+			      return;
+			    }
+			    desenharGrama(c, X, Y, x, y);
+			    if (ch === 'm') {
+			      px(c, X, Y + 6, TL, TL - 6, '#3E9A3A');
+			      for (i = 0; i < 4; i++) {
+			        var bx = X + i * 8;
+			        c.fillStyle = '#2C7A2C'; c.beginPath(); c.moveTo(bx, Y + 32); c.lineTo(bx + 4, Y + 6); c.lineTo(bx + 8, Y + 32); c.fill();
+			        c.fillStyle = "
+			& "'#56B84F'; c.beginPath(); c.moveTo(bx + 2, Y + 32); c.lineTo(bx + 4, Y + 12); c.lineTo(bx + 6, Y + 32); c.fill();
+			      }
+			    } else if (ch === 't') {
+			      px(c, X + 13, Y + 20, 6, 12, '#6B4423');
+			      c.fillStyle = '#1F6B33'; c.beginPath(); c.arc(X + 16, Y + 14, 14, 0, Math.PI * 2); c.fill();
+			      c.fillStyle = '#2E8B47'; c.beginPath(); c.arc(X + 12, Y + 10, 8, 0, Math.PI * 2); c.fill();
+			      c.fillStyle = '#48A85F'; c.beginPath(); c.arc(X + 10, Y + 8, 3, 0, Math.PI * 2); c.fill();
+			    } else if (ch === 'a') {
+			      px(c, X, Y, TL, TL, '#4C8BE0');
+			      var o = Math.floor((t / 220 + x + y) % 4) * 2;
+			      px(c, X + 4 + o, Y + 8, 10, 2, '#9CC6F5'); px(c, X + 16 - o, Y + 22, 10, 2, '#9CC6F5');
+			    } else if (ch === 'r') {
+			      c.fillStyle = '#8A8F99'; c.beginPath(); c.ellipse(X + 16, Y + 20, 13, 10, 0, 0, Math.PI * 2); c.fill();
+			      c.fillStyle = '#B4BAC4'; c.beginPath(); c.ellipse(X + 12, Y + 16, 6, 4, 0, 0, Math.PI * 2); c.fill();
+			    } else if (ch === 'f') {
+			      var dx = Math.floor((t / 400 + x) % 2);
+			      [[6, 8, '#F24B6A'], [20, 6, '#FFD23F'], [12, 20, '#FFFFFF'], [24, 22, '#F24B6A']].forEach(function (f) {
+			        px(c, X + f[0] + dx, Y + f[1], 5, 5, f[2]); px(c, X + f[0] + 1 + dx, Y + f[1] + 1, 3, 3, '#FFF6C2');
+			      });
+			    } else if (ch === 'p') {
+			      px(c, X + 14, Y + 16, 4, 14, '#6B4423'); px(c, X + 5, Y + 6, 22, 13, '#8A5A2B'); px(c, X + 7, Y + 8, 18, 9, '#C08A50');
+			    }
+			  }
+			  function desenharCentro(c) {
+			    var X = 6 * TL, Y = 6 * TL;
+			    px(c, X, Y + 28, 128, 68, '#F4F1EA'); px(c, X, Y + 90, 128, 6, '#C9C2B4');
+			    px(c, X - 4, Y, 136, 32, '#E3350D'); px(c, X - 4, Y + 26, 136, 6, '#A6240A');
+			    px(c, X + 52, Y + 4, 24, 20, '#FFFFFF'); px(c, X + 61, Y + 6, 6, 16, '#E3350D'); px(c, X + 55, Y + 11, 18, 6, '#E3350D');
+			    px(c, X + 10, Y + 44, 26, 18, '#7FC4F0'); px(c, X + 92, Y + 44, 26, 18, '#7FC4F0');
+			    c.fillStyle = '#11151D'; c.font = 'bold 9px Segoe UI'; c.fillText('POKÉMON CENTER', X + 22, Y + 78);
+			  }
+			  function desenharTreinador(c, X, Y, dir, quadro) {
+			    var perna = quadro % 2 ? 2 : -2;
+			    px(c, X + 9, Y + 26, 6, 4, '#2B2F3A'); px(c, X + 17, Y + 26, 6, 4, '#2B2F3A');
+			    if (quadro) { px(c, X + 9, Y + 22 + perna, 6, 6, '#3B4252'); px(c, X + 17, Y + 22 - perna, 6, 6, '#3B4252'); }
+			    else { px(c, X + 9, Y + 22, 6, 6, '#3B4252'); px(c, X + 17, Y + 22, 6, 6, '#3B4252'); }
+			    px(c, X + 8, Y + 13, 16, 10, '#2E6FE8'); px(c, X + 8, Y + 13, 16, 3, '#1E4FB0');
+			    px(c, X + 5, Y + 14, 4, 7, '#F2C9A0'); px(c, X + 23, Y + 14, 4, 7, '#F2C9A0');
+			    px(c, X + 9, Y + 4, 14, 10, '#F2C9A0');
+			    px(c, X + 8, Y + 1, 16, 6, '#E3350D'); px(c, X + 8, Y + 6, 16, 2, '#FFFFFF');
+			    if (dir === 'baixo') { px(c, X + 12, Y + 9, 2, 3, '#11151D'); px(c, X + 18, Y + 9, 2, 3, '#11151D'); px(c, X + 6, Y + 6, 20, 2, '#B4280A'); }
+			    else if (dir === 'cima') { px(c, X + 9, Y + 6, 14, 8, '#3A2416'); }
+			    else if (dir === 'esq') { px(c, X + 10, Y + 9, 2, 3, '#11151D'); px(c, X + 4, Y + 6, 8, 2, '#B4280A'); px(c, X + 18, Y + 6, 5, 7, '#3A2416'); }
+			    else { px(c, X + 20, Y + 9, 2, 3, '#11151D'); px(c, X + 20, Y + 6, 8, 2, '#B4280A'); px(c, X + 9, Y + 6, 5, 7, '#3A2416'); }
+			  }
+			  var fundo = null;
+			  function preRender() {
+			    if (fundo || !document.createElement) { return; }
+			    fundo = document.createElement('canvas'); fundo.width = COLS * TL; fundo.height = LINS * TL;
+			    var c = fundo.getContext && fundo.getContext('2d'); if (!c) { fundo = null; return; }
+			    for (var y = 0; y < LINS; y++) { for (var x = 0; x < COLS; x++) { if ('af'.indexOf(tile(x, y)) < 0) { desenharTile(c, x, y, 0); } } }
+			    desenharCentro(c);
+			  }
+			  function quadro(t) {
+			    var cv = $('sf-canvas'); if (!cv || !cv.getContext) { return; }
+			    var c = cv.getContext('2d'); if (!c) { return; }
+			    preRender(); if (fundo) { c.drawImage(fundo, 0, 0); }
+			    for (var y = 0; y < LINS; y++) { for (var x = 0; x < COLS; x++) { if ('af'.indexOf(tile(x, y)) >= 0) { desenharTile(c, x, y, t); } } }
+			    var X = S.x * TL, Y = S.y * TL, q = 0;
+			    if (S.anda) {
+			    "
+			& "  var p = Math.min(1, (t - S.anda.t0) / 150);
+			      X = (S.anda.x0 + (S.x - S.anda.x0) * p) * TL; Y = (S.anda.y0 + (S.y - S.anda.y0) * p) * TL;
+			      q = p < 1 ? 1 + (S.passo % 2) : 0;
+			      if (p >= 1) { var fim = S.anda; S.anda = null; chegou(fim); }
+			    }
+			    c.fillStyle = 'rgba(0,0,0,.25)'; c.beginPath(); c.ellipse(X + 16, Y + 29, 10, 4, 0, 0, Math.PI * 2); c.fill();
+			    desenharTreinador(c, X, Y - 2, S.dir, q);
+			    if (tile(S.x, S.y) === 'm' && !S.anda) {
+			      for (var i = 0; i < 4; i++) {
+			        var bx = S.x * TL + i * 8;
+			        c.fillStyle = '#2C7A2C'; c.beginPath(); c.moveTo(bx, Y + 32); c.lineTo(bx + 4, Y + 18); c.lineTo(bx + 8, Y + 32); c.fill();
+			      }
+			    }
+			  }
+			  function laco(t) {
+			    quadro(t || 0);
+			    if (S.tecla && !S.anda && !S.luta) { mover(S.tecla); }
+			    if (window.requestAnimationFrame) { window.__safariLaco = window.requestAnimationFrame(laco); }
+			  }
+
+			  /* ================= MOVIMENTO ================= */
+			  var DIRS = { cima: [0, -1], baixo: [0, 1], esq: [-1, 0], dir: [1, 0] };
+			  function mover(d) {
+			    if (S.anda || S.luta) { return; }
+			    S.dir = d;
+			    var nx = S.x + DIRS[d][0], ny = S.y + DIRS[d][1], ch = tile(nx, ny);
+			    if (ch === 'p') { mensagem('📜 <b>Zona Safari</b> · Mato alto = Pokémon selvagens · Centro Pokémon reabastece a mochila · Shiny: 1 em ' + SHINY + '!'); return; }
+			    if (ch === 'H') { return; }
+			    if (bloqueia(ch)) { return; }
+			    S.anda = { x0: S.x, y0: S.y, t0: (window.performance ? performance.now() : 0) };
+			    S.x = nx; S.y = ny; S.passo++;
+			  }
+			  function chegou() {
+			    var ch = tile(S.x, S.y);
+			    if (ch === 'D') {
+			      S.bolsa = { poke: 10, grande: 5, ultra: 3, fruta: 3 };
+			      mensagem('🏥 Bem-vindo ao <b>Centro Pokémon</b>! Sua mochila foi reabastecida.');
+			      S.x = 8; S.y = 9; S.dir = 'baixo'; atualizarLado();
+			      return;
+			    }
+			    if (ch === 'm' && Math.random() < 0.13) { encontro(); }
+			  }
+
+			  /* ================= ENCONTRO / CAPTURA ================= */
+			  function sortearPokemon() {
+			    var lista = K.LISTA.filter(function (p) { return p.padrao && (!S.gen || p.gen === S.gen); });
+			    var pesos = lista.map(function (p) { return p.total >= 580 ? 0.06 : p.total > 500 ? 0.3 : p.total > 400 ? 0.7 : 1; });
+			    var soma = pesos.reduce(function (a, b) { return a + b; }, 0), r = Math.random() * soma;
+			    for (var i = 0; i < lista.length; i++) { r -= pesos[i]; if (r <= 0) { return lista[i]; } }
+			    return lista[lista.length - 1];
+			  }
+			  function taxaCaptura(p) { return p.total >= 580 ? 3 : Math.max(10, Math.min(255, Math.round(255 - (p.total - 200) * 0.62))); }
+			  function encontro() {
+			    var p = sortearPokemon(), shiny = Math.random() < 1 / SHINY;
+			    S.enc++; S.tecla = null;
+			    if (shiny) { S.shinies++; }
+			    S.luta = { id: p.id, shiny: shiny, nivel: 3 + Math.floor(Math.random() * 45), fruta: false, fase: 'transicao', tentativas: 0 };
+			    render();
+			    setTimeout(function () { if (S.luta) { S.luta.fase = 'menu'; S.luta.texto = `Um <b>${esc(p.nome)}</b> selvagem apareceu!${shiny ? ' <span class=sf-sh>✨ É SHINY!</span>' : ''}`; render(); } }, 1100);
+			  }
+			  function chanceCaptura(L, bola) {
+			    var a = taxaCaptura(K.P[L.id]) * BOLAS[bola].mult * (L.fruta ? 1.5 : 1) * 2 / 3; /* bônus do Safari: como se estivesse com ~1/3 do HP */
+			    if (a >= 255) { return 1; }
+			    var b = 1048560 / Math.sqrt(Math.sqrt(16711680 / a));
+			    return Math.pow(b / 65536, 4);
+			  }
+			  function balancadas(L, bola) {
+			    var a = taxaCaptura(K.P[L.id]) * BOLAS[bola].mult * (L.fruta ? 1.5 : 1) * 2 / 3; /* bônus do Safari: como se estivesse com ~1/3 do HP */
+			    if (a >= 255) { return 4; }
+			    var b = 1048560 / Math.sqrt(Math.sqrt(16711680 / a)), n = 0;
+			    while (n < 4 && Math.random() * 65536 < b) { n++; }
+			    return n;
+			  }
+			  function esperar(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+			  async function arremessar(bola) {
+			    var L = S.luta; if (!L || L.fase !== 'menu' || S.bolsa[bola] <= 0) { return; }
+			    S.bolsa[bola]--; L.tentativas++; L.fase = 'animando'; L.bola = bola;
+			    var p = K"
+			& ".P[L.id], n = balancadas(L, bola);
+			    L.texto = `Você jogou uma <b>${BOLAS[bola].nome}</b>!`; render();
+			    var cena = $('sf-cena'), mon = $('sf-mon');
+			    if (cena) {
+			      var b = document.createElement('div'); b.className = 'sf-bola voa'; b.style.setProperty('--c', BOLAS[bola].cor); b.id = 'sf-bola';
+			      cena.appendChild(b);
+			    }
+			    await esperar(650);
+			    if (mon) { mon.classList.add('suga'); }
+			    await esperar(550);
+			    var bolaEl = $('sf-bola'); if (bolaEl) { bolaEl.className = 'sf-bola parada'; }
+			    await esperar(400);
+			    for (var i = 0; i < Math.min(n, 3); i++) {
+			      if (bolaEl) { bolaEl.classList.remove('balanca'); void bolaEl.offsetWidth; bolaEl.classList.add('balanca'); }
+			      L.texto = ['...', '... ...', '... ... ...'][i]; atualizarTexto();
+			      await esperar(750);
+			    }
+			    if (n >= 4) {
+			      if (bolaEl) { bolaEl.classList.add('pegou'); }
+			      if (cena) { for (var k = 0; k < 8; k++) { var e = document.createElement('i'); e.className = 'sf-estrela'; e.style.setProperty('--a', (k * 45) + 'deg'); cena.appendChild(e); } }
+			      S.caixa.unshift({ id: L.id, shiny: L.shiny, nivel: L.nivel, bola: bola });
+			      L.fase = 'fim'; L.texto = `Gotcha! <b>${esc(p.nome)}</b> foi capturado!${L.shiny ? ' ✨' : ''}`; atualizarTexto(); atualizarLado();
+			      await esperar(1800); S.luta = null; mensagem(`Você capturou <b>${esc(p.nome)}</b>! Ele foi para a sua caixa.`); render();
+			      return;
+			    }
+			    if (bolaEl) { bolaEl.classList.add('abre'); }
+			    if (mon) { mon.classList.remove('suga'); mon.classList.add('escapa'); }
+			    L.texto = ['Ah não! O Pokémon escapou!', 'Argh! Quase!', 'Puxa! Parecia que tinha pegado!', 'Droga! Foi por pouco!'][Math.min(n, 3)];
+			    L.fruta = false; atualizarTexto();
+			    await esperar(900);
+			    if (bolaEl) { bolaEl.remove(); }
+			    var foge = 0.05 + p.b.spe / 600 + L.tentativas * 0.03;
+			    if (Math.random() < foge) {
+			      S.fugas++; L.fase = 'fim'; L.texto = `O <b>${esc(p.nome)}</b> selvagem fugiu!`; atualizarTexto();
+			      if (mon) { mon.classList.add('foge'); }
+			      await esperar(1300); S.luta = null; mensagem(`O ${esc(p.nome)} fugiu... continue procurando no mato!`); render();
+			      return;
+			    }
+			    L.fase = 'menu'; L.texto = `O que você vai fazer?`; render();
+			  }
+			  function usarFruta() {
+			    var L = S.luta; if (!L || L.fase !== 'menu' || S.bolsa.fruta <= 0 || L.fruta) { return; }
+			    S.bolsa.fruta--; L.fruta = true; L.texto = `Você jogou uma <b>Fruta Frambo</b>! O ${esc(K.P[L.id].nome)} está mais calmo.`; render();
+			  }
+			  function fugir() { if (!S.luta || S.luta.fase !== 'menu') { return; } S.luta = null; mensagem('Você fugiu em segurança.'); render(); }
+
+			  /* ================= UI ================= */
+			  function mensagem(txt) { S.msg = txt; var m = $('sf-msg'); if (m) { m.innerHTML = txt; } }
+			  function atualizarTexto() { var t = $('sf-texto'); if (t && S.luta) { t.innerHTML = S.luta.texto || ''; } }
+			  function lutaHtml() {
+			    var L = S.luta; if (!L) { return ''; }
+			    if (L.fase === 'transicao') { return `<div class='sf-trans'><i></i><i></i></div>`; }
+			    var p = K.P[L.id], gif = L.shiny ? K.URL.gif(p.id).replace('/showdown/', '/showdown/shiny/') : K.URL.gif(p.id);
+			    var home = L.shiny ? K.URL.home(p.id).replace('/home/', '/home/shiny/') : K.URL.home(p.id);
+			    var chance = Math.round(100 * chanceCaptura(L, 'poke'));
+			    var menu = L.fase === 'menu' ? `<div class='sf-menu'>
+			        ${['poke', 'grande', 'ultra'].map(function (b) { return `<div class='sf-op${S.bolsa[b] ? '' : ' off'}' data-acao='bola' data-b='${b}'><i class='sf-mini' style='--c:${BOLAS[b].cor}'></i>${BOLAS[b].nome}<em>×${S.bolsa[b]}</em><small>${Math.round(100 * chanceCaptura(L, b))}%</small></div>`; }).join('')}
+			        <div class='sf-op${S.bolsa.fruta && !L.fruta ? '' : ' off'}' data-acao='fruta'>🍓 Fruta Frambo<em>×${S.bolsa.fruta}</em><small>+50%</small></div>
+			        <div class='sf-op fugir' data-acao='fugir'>🏃 Fugir</div></div>` : '';
+			    return `<div class='sf-luta' id='sf-cena' style='--c:${K.corTipo(p.t[0])}'>
+			 "
+			& "     <div class='sf-ceu'></div><div class='sf-chao'></div>
+			      <div class='sf-hud'><b>${esc(p.nome)}${L.shiny ? ' <span class=sf-sh>✨</span>' : ''}</b><span>Nv. ${L.nivel}</span><div>${p.t.map(K.chip).join('')}</div>
+			        <div class='sf-chance'>Chance com Pokébola: <b>${chance}%</b>${L.fruta ? ' · 🍓 calmo' : ''}</div></div>
+			      <div class='sf-plat'></div>
+			      <div class='sf-mon${L.shiny ? ' shiny' : ''}' id='sf-mon'>${K.img([gif, home, K.URL.arte(p.id)])}${L.shiny ? `<div class='sf-brilho'><i></i><i></i><i></i><i></i></div>` : ''}</div>
+			      <div class='sf-txt'><span id='sf-texto'>${L.texto || ''}</span></div>${menu}</div>`;
+			  }
+			  function ladoHtml() {
+			    var bolsa = ['poke', 'grande', 'ultra'].map(function (b) {
+			      return `<div class='sf-item'><i class='sf-mini' style='--c:${BOLAS[b].cor}'></i><span>${BOLAS[b].nome}</span><b>×${S.bolsa[b]}</b></div>`;
+			    }).join('') + `<div class='sf-item'><i>🍓</i><span>Fruta Frambo</span><b>×${S.bolsa.fruta}</b></div>`;
+			    var caixa = S.caixa.map(function (c) {
+			      var p = K.P[c.id], src = c.shiny ? K.URL.sprite(c.id).replace('/pokemon/', '/pokemon/shiny/') : K.URL.sprite(c.id);
+			      return `<div class='sf-cx${c.shiny ? ' sh' : ''}' title='${esc(p.nome)} · Nv. ${c.nivel}'><img src='${src}'/><i class='sf-mini' style='--c:${BOLAS[c.bola].cor}'></i>${c.shiny ? '<em>✨</em>' : ''}</div>`;
+			    }).join('');
+			    var gens = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(function (g) { return `<span class='gc${S.gen === g ? ' on' : ''}' data-acao='gen' data-g='${g}'>${g || 'Todas'}</span>`; }).join('');
+			    return `<div class='sf-sec'>REGIÃO DO MATO <em>gerações dos Pokémon</em></div><div class='gens sf-gens'>${gens}</div>
+			      <div class='sf-sec'>MOCHILA</div><div class='sf-bolsa'>${bolsa}</div>
+			      <div class='sf-stats'><div><span>ENCONTROS</span><b>${S.enc}</b></div><div><span>CAPTURAS</span><b>${S.caixa.length}</b></div><div><span>SHINY</span><b>${S.shinies}</b></div><div><span>FUGAS</span><b>${S.fugas}</b></div></div>
+			      <div class='sf-sec'>SUA CAIXA <em>${S.caixa.length} Pokémon</em></div><div class='sf-caixa'>${caixa || `<span class='vazio'>Capture Pokémon no mato alto!</span>`}</div>
+			      <div class='sf-pad'><div></div><div class='sf-tc' data-tecla='cima'>▲</div><div></div><div class='sf-tc' data-tecla='esq'>◀</div><div class='sf-tc' data-tecla='baixo'>▼</div><div class='sf-tc' data-tecla='dir'>▶</div></div>`;
+			  }
+			  function atualizarLado() { var l = $('sf-lado'); if (l) { l.innerHTML = ladoHtml(); } }
+			  function render() {
+			    raiz.innerHTML = `<div class='pk-palco safari'>
+			      <div class='topo'><span class='sf-dica'>⌨ setas / WASD · ou use o direcional ao lado</span><div class='titulo'><b>SAFARI</b><span>ande pelo mato e capture</span></div></div>
+			      <div class='sf-jogo' id='sf-jogo' tabindex='0'><canvas id='sf-canvas' width='${COLS * TL}' height='${LINS * TL}'></canvas>
+			        <div class='sf-msg' id='sf-msg'>${S.msg}</div>${lutaHtml()}</div>
+			      <div class='sf-lado vidro' id='sf-lado'>${ladoHtml()}</div></div>`;
+			    K.escala(raiz);
+			    quadro(0);
+			  }
+
+			  /* ================= ENTRADA ================= */
+			  var TECLAS = { ArrowUp: 'cima', ArrowDown: 'baixo', ArrowLeft: 'esq', ArrowRight: 'dir', w: 'cima', s: 'baixo', a: 'esq', d: 'dir', W: 'cima', S: 'baixo', A: 'esq', D: 'dir' };
+			  if (!window.__safariTeclas) {
+			    window.__safariTeclas = true;
+			    window.addEventListener('keydown', function (ev) {
+			      var s = window.__safari; if (!s) { return; }
+			      var d = TECLAS[ev.key]; if (d) { s.tecla = d; ev.preventDefault(); }
+			    });
+			    window.addEventListener('keyup', function (ev) { var s = window.__safari; if (s && TECLAS[ev.key] === s.tecla) { s.tecla = null; } });
+			    window.addEventListener('resize', function () { K.escala(raiz); });
+			  }
+			  raiz.onmousedown = function (ev) {
+			    var tc = ev.target.closest('[data-tecla]'); if (tc) { S.tecla = tc.getAttribute('data-tecla'); ev.preventDefault(); }
+			    var jogo = $('sf-jogo'); if (jogo && jogo.focus && ev.target.closest('#"
+			& "sf-jogo')) { jogo.focus(); }
+			  };
+			  raiz.onmouseup = function () { S.tecla = null; };
+			  raiz.onmouseleave = function () { S.tecla = null; };
+			  raiz.onclick = function (ev) {
+			    var el = ev.target.closest('[data-acao]'); if (!el || el.classList.contains('off')) { return; }
+			    switch (el.getAttribute('data-acao')) {
+			      case 'bola': arremessar(el.getAttribute('data-b')); break;
+			      case 'fruta': usarFruta(); break;
+			      case 'fugir': fugir(); break;
+			      case 'gen': S.gen = +el.getAttribute('data-g'); atualizarLado(); break;
+			    }
+			  };
+
+			  window.__safariApi = { chanceCaptura: chanceCaptura, taxaCaptura: taxaCaptura, sortearPokemon: sortearPokemon, mover: mover, tile: tile };
+			  if (window.__safariLaco && window.cancelAnimationFrame) { window.cancelAnimationFrame(window.__safariLaco); }
+			  if (S.luta && S.luta.fase !== 'menu') { S.luta.fase = 'menu'; S.luta.texto = 'O que você vai fazer?'; }
+			  render();
+			  laco(0);
+			})();
+			"
+			RETURN
+			    "<div id='app-raiz'></div><script>" & _dados & "</script><script>" & _motor & "</script>"
+			```
+		displayFolder: <HTML>
+
+	measure '<CSS> Safari' = ```
+
+			"#htmlContent { margin: 0; padding: 0; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: #E9ECF2; background: #0B0E14; }
+			.htmlViewerEntry { height: 100vh; }
+			#app-raiz { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: #0B0E14; }
+			.pk-palco { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: 0 0; overflow: hidden; background: radial-gradient(circle at 50% 30%, #1A2130, #0B0E14 70%); }
+			.pk-ico { display: inline-block; vertical-align: middle; border-radius: 50%; }
+			.pk-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; color: #fff; padding: 2px 9px 2px 3px; border-radius: 999px; background: var(--c); margin: 0 4px 3px 0; text-shadow: 0 1px 1px rgba(0,0,0,.35); }
+			.bt { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 18px; border-radius: 999px; font-size: 12px; font-weight: 800; letter-spacing: .05em; cursor: pointer; user-select: none; transition: transform .12s, filter .12s, box-shadow .12s; white-space: nowrap; }
+			.bt:hover { transform: translateY(-1px); filter: brightness(1.12); }
+			.bt.off { opacity: .35; pointer-events: none; }
+			.bt-sec { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); color: #E9ECF2; }
+			.bt-sec.on { background: rgba(255,203,5,.16); border-color: #FFCB05; color: #FFCB05; }
+			.bt-gold { background: #FFCB05; color: #11151D; box-shadow: 0 0 18px rgba(255,203,5,.35); }
+			.bt-go { height: 48px; padding: 0 44px; font-size: 17px; letter-spacing: .14em; background: linear-gradient(90deg, #FF5A36, #FFCB05); color: #11151D; box-shadow: 0 0 28px rgba(255,140,40,.5); animation: pulsa 2s ease-in-out infinite; }
+			.bt-go.off { animation: none; }
+			@keyframes pulsa { 0%, 100% { box-shadow: 0 0 20px rgba(255,140,40,.4); } 50% { box-shadow: 0 0 38px rgba(255,160,40,.75); } }
+			.topo { position: absolute; left: 380px; right: 24px; top: 10px; height: 40px; display: flex; align-items: center; justify-content: space-between; z-index: 5; }
+			.titulo { text-align: right; }
+			.titulo b { display: block; font-size: 22px; font-weight: 900; letter-spacing: .26em; color: #fff; line-height: 1.1; }
+			.titulo span { font-size: 10px; color: #8A93A3; font-weight: 600; letter-spacing: .06em; }
+			.vidro { border-radius: 18px; background: linear-gradient(160deg, rgba(30,36,48,.92), rgba(14,17,24,.94)); border: 1px solid rgba(255,255,255,.08); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 18px 40px rgba(0,0,0,.35); }
+			::-webkit-scrollbar { width: 6px; height: 6px; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 6px; } ::-webkit-scrollbar-track { background: transparent; }
+
+			/* partículas de fundo por tipo (iguais às da Pokédex) */
+			.fx { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+			.fx i { position: absolute; display: block; opacity: 0; animation-iteration-count: infinite; animation-timing-function: linear; }
+			.fx-water i, .fx-poison i, .fx-normal i { top: auto !important; bottom: -30px; border-radius: 50%; animation-name: bolha; animation-timing-function: ease-in-out; }
+			.fx-water i { border: 1.5px solid rgba(190,215,255,.60); background: radial-gradient(circle at 32% 30%, rgba(255,255,255,.70) 0 12%, rgba(120,160,255,.12) 40%, rgba(104,144,240,.05) 70%); }
+			.fx-poison i { border: 1.5px solid rgba(220,150,230,.55); background: radial-gradient(circle at 32% 30%, rgba(255,255,255,.55) 0 12%, rgba(160,64,160,.30) 45%, rgba(160,64,160,.08) 70%); }
+			.fx-normal i { background: rgba(255,255,255,.22); }
+			@keyframes bolha { 0% { transform: translate(0,0) scale(.7); opacity: 0; } 10% { opacity: .9; } 50% { transform: translate(18px,-380px) scale(1.2); } 90% { opacity: .8; } 100% { transform: translate(-10px,-780px) scale(1.5); opacity: 0; } }
+			.fx-fire i { top: auto !important; bottom: -10px; width: 4px !important; height: 4px !important; border-radius: 50%; background: #FFD27A; box-shadow: 0 0 6px 2px rgba(255,"
+			& "140,40,.85), 0 0 14px 4px rgba(255,80,20,.35); animation-name: brasa; animation-timing-function: ease-out; }
+			@keyframes brasa { 0% { transform: translate(0,0) scale(1); opacity: 0; } 8% { opacity: 1; } 30% { transform: translate(-14px,-200px) scale(.9); } 60% { transform: translate(16px,-420px) scale(.7); opacity: .9; } 100% { transform: translate(-6px,-680px) scale(.2); opacity: 0; } }
+			.fx-electric i { width: 18px !important; height: 50px !important; filter: drop-shadow(0 0 6px rgba(248,208,48,.95)); animation-name: raiofx; animation-timing-function: steps(1, end); }
+			.fx-electric i::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, #FFFBD0, #F8D030); clip-path: polygon(55% 0, 18% 56%, 45% 56%, 28% 100%, 86% 40%, 58% 40%, 76% 0); }
+			@keyframes raiofx { 0%, 100% { opacity: 0; } 3% { opacity: 1; } 5% { opacity: .1; } 7% { opacity: 1; } 10% { opacity: 0; } }
+			.fx-grass i, .fx-ice i, .fx-rock i { top: -30px !important; animation-timing-function: ease-in-out; }
+			.fx-grass i { width: 10px !important; height: 16px !important; border-radius: 0 100% 0 100%; background: linear-gradient(135deg, #A8E68A, #4E9A2F); animation-name: folhafx; }
+			.fx-ice i { border-radius: 50%; background: #fff; box-shadow: 0 0 8px rgba(200,240,255,.9); max-width: 8px; max-height: 8px; animation-name: neve; }
+			.fx-rock i { background: #B8A038; clip-path: polygon(20% 0, 80% 10%, 100% 60%, 60% 100%, 0 70%); animation-name: pedrafx; animation-timing-function: cubic-bezier(.5,0,1,1); }
+			@keyframes folhafx { 0% { transform: translate(0,0) rotate(0); opacity: 0; } 10% { opacity: .85; } 50% { transform: translate(-60px,380px) rotate(200deg); } 90% { opacity: .7; } 100% { transform: translate(40px,780px) rotate(420deg); opacity: 0; } }
+			@keyframes neve { 0% { transform: translate(0,0); opacity: 0; } 10% { opacity: .9; } 50% { transform: translate(30px,380px); } 100% { transform: translate(-20px,780px); opacity: 0; } }
+			@keyframes pedrafx { 0% { transform: translate(0,0) rotate(0); opacity: 0; } 5% { opacity: .8; } 100% { transform: translate(20px,780px) rotate(360deg); opacity: .5; } }
+			.fx-ghost i { top: auto !important; bottom: -60px; width: 46px !important; height: 46px !important; border-radius: 50%; background: radial-gradient(circle, rgba(170,140,230,.55), rgba(112,88,152,0) 70%); filter: blur(2px); animation-name: alma; animation-timing-function: ease-in-out; }
+			@keyframes alma { 0% { transform: translate(0,0) scale(.6); opacity: 0; } 20% { opacity: .85; } 50% { transform: translate(40px,-360px) scale(1.2); } 80% { opacity: .5; } 100% { transform: translate(-30px,-760px) scale(.8); opacity: 0; } }
+			.fx-psychic i, .fx-fighting i { width: 30px !important; height: 30px !important; border-radius: 50%; border: 2px solid rgba(248,88,136,.70); animation-name: pulsofx; animation-timing-function: ease-out; }
+			.fx-fighting i { border-color: rgba(255,120,60,.70); }
+			@keyframes pulsofx { 0% { transform: scale(.2); opacity: 0; } 10% { opacity: .9; } 100% { transform: scale(4); opacity: 0; } }
+			.fx-flying i { width: 110px !important; height: 2px !important; border-radius: 2px; background: linear-gradient(90deg, transparent, rgba(225,225,255,.65), transparent); animation-name: ventofx; animation-timing-function: ease-in-out; }
+			.fx-ground i { border-radius: 50%; background: rgba(224,192,104,.55); filter: blur(1px); animation-name: poeirafx; }
+			.fx-dark i { width: 90px !important; height: 90px !important; border-radius: 50%; background: radial-gradient(circle, rgba(70,50,50,.60), transparent 70%); filter: blur(4px); animation-name: fumaca; animation-timing-function: ease-in-out; }
+			@keyframes ventofx { 0% { transform: translateX(-300px); opacity: 0; } 20% { opacity: .8; } 100% { transform: translateX(500px); opacity: 0; } }
+			@keyframes poeirafx { 0% { transform: translate(-40px,0); opacity: 0; } 20% { opacity: .7; } 100% { transform: translate(260px,-60px); opacity: 0; } }
+			@keyframes fumaca { 0% { transform: translate(0,0) scale(.6); opacity: 0; } 30% { opa"
+			& "city: .7; } 100% { transform: translate(120px,-140px) scale(1.6); opacity: 0; } }
+			.fx-fairy i, .fx-dragon i, .fx-steel i { width: 12px !important; height: 12px !important; clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%); animation-name: brilhofx; animation-timing-function: ease-in-out; }
+			.fx-fairy i { background: #FFD6E8; } .fx-dragon i { background: #B9A2FF; } .fx-steel i { background: #EEF3FA; }
+			.fx-bug i { width: 5px !important; height: 5px !important; border-radius: 50%; background: #E6F57A; box-shadow: 0 0 10px 3px rgba(200,230,80,.70); animation-name: vagalume; animation-timing-function: ease-in-out; }
+			@keyframes brilhofx { 0%, 100% { transform: scale(0) rotate(0); opacity: 0; } 50% { transform: scale(1.4) rotate(90deg); opacity: 1; } }
+			@keyframes vagalume { 0% { transform: translate(0,0); opacity: 0; } 25% { transform: translate(30px,-20px); opacity: 1; } 50% { transform: translate(-10px,-50px); opacity: .3; } 75% { transform: translate(-40px,-10px); opacity: 1; } 100% { transform: translate(0,0); opacity: 0; } }
+
+			.safari { background: radial-gradient(circle at 40% 30%, #16301F, #0B0E14 70%); }
+			.sf-dica { font-size: 10px; font-weight: 700; color: #8A93A3; }
+			.sf-jogo { position: absolute; left: 16px; top: 60px; width: 960px; height: 640px; border-radius: 18px; overflow: hidden; border: 3px solid #283041; box-shadow: 0 18px 40px rgba(0,0,0,.5); outline: none; background: #7CC855; }
+			.sf-jogo:focus { border-color: #FFCB05; }
+			.sf-jogo canvas { display: block; width: 960px; height: 640px; image-rendering: pixelated; }
+			.sf-msg { position: absolute; left: 16px; right: 16px; bottom: 14px; padding: 10px 16px; border-radius: 12px; background: rgba(248,250,252,.95); border: 3px solid #3A4A6B; color: #1E293B; font-size: 13px; font-weight: 600; box-shadow: 0 6px 0 rgba(0,0,0,.25); }
+			.sf-msg b { color: #B4280A; }
+
+			/* ---------- encontro ---------- */
+			.sf-trans { position: absolute; inset: 0; z-index: 10; animation: sf-pisca .6s steps(2) 1; }
+			.sf-trans i { position: absolute; left: 0; right: 0; height: 50%; background: #05070A; animation: sf-barra .5s ease-in .55s both; }
+			.sf-trans i:first-child { top: 0; transform-origin: top; } .sf-trans i:last-child { bottom: 0; transform-origin: bottom; }
+			@keyframes sf-pisca { 0%, 50% { background: rgba(255,255,255,.85); } 25%, 75% { background: rgba(0,0,0,.6); } 100% { background: transparent; } }
+			@keyframes sf-barra { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+			.sf-luta { position: absolute; inset: 0; z-index: 9; overflow: hidden; animation: sf-abre .45s ease-out; }
+			@keyframes sf-abre { from { clip-path: inset(50% 0 50% 0); } to { clip-path: inset(0 0 0 0); } }
+			.sf-ceu { position: absolute; inset: 0; background: linear-gradient(180deg, #9ED8FF 0%, #D9F1FF 45%, #A8E07E 46%, #6FBF4A 100%); }
+			.sf-chao { position: absolute; left: 0; right: 0; top: 46%; bottom: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 2px, transparent 2px 24px), radial-gradient(ellipse at 70% 30%, color-mix(in srgb, var(--c) 30%, transparent), transparent 60%); }
+			.sf-plat { position: absolute; left: 560px; top: 300px; width: 300px; height: 70px; border-radius: 50%; background: radial-gradient(ellipse, #5FAE3E 30%, #4A8F2F 60%, transparent 72%); box-shadow: inset 0 -6px 0 rgba(0,0,0,.12); }
+			.sf-mon { position: absolute; left: 600px; top: 120px; width: 220px; height: 210px; display: flex; align-items: flex-end; justify-content: center; animation: sf-entra .6s ease-out; }
+			.sf-mon img { max-width: 110px; max-height: 110px; transform: scale(2); transform-origin: bottom center; image-rendering: pixelated; filter: drop-shadow(0 8px 6px rgba(0,0,0,.3)); }
+			@keyframes sf-entra { from { transform: translateX(-500px); filter: brightness(0); } 70% { filter: brightness(0); } to { transform: none; filter: none; } }
+			.sf-mon.suga { animation: sf-suga .5s ease-in forwards; }
+			.sf-mon.escapa { animation: sf-escapa .45s ease-out; }
+			.sf-mon.foge { animation: sf-foge ."
+			& "9s ease-in forwards; }
+			@keyframes sf-suga { 0% { filter: brightness(1); } 40% { filter: brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(-30deg); transform: scale(1); } 100% { filter: brightness(0) invert(1); transform: scale(0) translateY(60px); opacity: 0; } }
+			@keyframes sf-escapa { from { transform: scale(0); filter: brightness(0) invert(1); } to { transform: scale(1); filter: none; } }
+			@keyframes sf-foge { to { transform: translateX(520px); opacity: 0; } }
+			.sf-mon.shiny img { filter: drop-shadow(0 0 10px rgba(255,230,120,.9)) drop-shadow(0 8px 6px rgba(0,0,0,.3)); }
+			.sf-brilho i { position: absolute; width: 18px; height: 18px; background: #FFF1A8; clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%); animation: sf-cint 1.4s ease-in-out infinite; }
+			.sf-brilho i:nth-child(1) { left: 20px; top: 40px; } .sf-brilho i:nth-child(2) { left: 180px; top: 70px; animation-delay: .35s; }
+			.sf-brilho i:nth-child(3) { left: 60px; top: 150px; animation-delay: .7s; } .sf-brilho i:nth-child(4) { left: 150px; top: 10px; animation-delay: 1.05s; }
+			@keyframes sf-cint { 0%, 100% { transform: scale(0) rotate(0); opacity: 0; } 50% { transform: scale(1.3) rotate(90deg); opacity: 1; } }
+			.sf-sh { color: #F59E0B; font-weight: 900; }
+			.sf-hud { position: absolute; left: 40px; top: 40px; width: 330px; padding: 12px 16px; border-radius: 14px; background: rgba(248,250,252,.96); border: 3px solid #3A4A6B; box-shadow: 0 6px 0 rgba(0,0,0,.25); color: #1E293B; }
+			.sf-hud b { font-size: 20px; font-weight: 900; } .sf-hud > span { float: right; font-size: 13px; font-weight: 800; color: #475569; margin-top: 4px; }
+			.sf-hud > div { margin-top: 4px; }
+			.sf-chance { font-size: 11px; font-weight: 700; color: #475569; }
+			.sf-chance b { color: #16A34A; }
+			.sf-txt { position: absolute; left: 16px; right: 16px; bottom: 132px; padding: 12px 18px; border-radius: 12px; background: rgba(248,250,252,.96); border: 3px solid #3A4A6B; color: #1E293B; font-size: 15px; font-weight: 600; box-shadow: 0 6px 0 rgba(0,0,0,.25); }
+			.sf-txt b { color: #B4280A; }
+			.sf-menu { position: absolute; left: 16px; right: 16px; bottom: 16px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+			.sf-op { position: relative; height: 96px; border-radius: 14px; background: linear-gradient(180deg, #FFFFFF, #E2E8F0); border: 3px solid #3A4A6B; box-shadow: 0 5px 0 #3A4A6B; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 13px; font-weight: 900; color: #1E293B; cursor: pointer; transition: transform .1s, box-shadow .1s; }
+			.sf-op:hover { transform: translateY(-2px); box-shadow: 0 7px 0 #3A4A6B; background: linear-gradient(180deg, #FFF8D6, #FFE27A); }
+			.sf-op.off { opacity: .4; pointer-events: none; }
+			.sf-op em { font-style: normal; font-size: 11px; color: #64748B; }
+			.sf-op small { position: absolute; top: 6px; right: 8px; font-size: 10px; font-weight: 900; color: #16A34A; }
+			.sf-op.fugir { background: linear-gradient(180deg, #FEE2E2, #FCA5A5); }
+			.sf-mini { display: inline-block; width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(var(--c) 0 46%, #15171C 46% 54%, #F8FAFC 54%); border: 2px solid #15171C; position: relative; }
+			.sf-mini::after { content: ''; position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -5px 0 0 -5px; border-radius: 50%; background: #F8FAFC; border: 2px solid #15171C; }
+			.sf-bola { position: absolute; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: linear-gradient(var(--c) 0 46%, #15171C 46% 54%, #F8FAFC 54%); border: 2px solid #15171C; z-index: 5; }
+			.sf-bola::after { content: ''; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -5.5px 0 0 -5.5px; border-radius: 50%; background: #F8FAFC; border: 2px solid #15171C; }
+			.sf-bola.voa { left: 120px; top: 520px; animation: sf-voa .65s cubic-bezier(.3,.1,.5,1) forwards; }
+			@keyframes sf-voa { 0% { left: 120px; top: 520px; transform: rotate(0); "
+			& "} 50% { top: 120px; } 100% { left: 710px; top: 210px; transform: rotate(900deg); } }
+			.sf-bola.parada { left: 710px; top: 210px; animation: sf-cai .4s ease-in forwards; }
+			@keyframes sf-cai { 0% { top: 210px; } 70% { top: 318px; } 85% { top: 306px; } 100% { top: 318px; } }
+			.sf-bola.balanca { left: 710px; top: 318px; animation: sf-balanca .7s ease-in-out; }
+			@keyframes sf-balanca { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-28deg); } 75% { transform: rotate(28deg); } }
+			.sf-bola.pegou { left: 710px; top: 318px; filter: brightness(.6); animation: none; }
+			.sf-bola.abre { left: 710px; top: 318px; animation: sf-abre-b .5s ease-out forwards; }
+			@keyframes sf-abre-b { to { transform: scale(1.8); opacity: 0; filter: brightness(3); } }
+			.sf-estrela { position: absolute; left: 710px; top: 318px; width: 16px; height: 16px; margin: -8px 0 0 -8px; background: #FFE27A; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); z-index: 6; animation: sf-estrela .8s ease-out forwards; }
+			@keyframes sf-estrela { from { transform: rotate(var(--a)) translateY(0) scale(.4); opacity: 1; } to { transform: rotate(var(--a)) translateY(-70px) scale(1.2); opacity: 0; } }
+
+			/* ---------- lado ---------- */
+			.sf-lado { position: absolute; left: 992px; top: 60px; width: 272px; height: 644px; box-sizing: border-box; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+			.sf-sec { font-size: 10px; font-weight: 900; letter-spacing: .16em; color: #8A93A3; display: flex; justify-content: space-between; }
+			.sf-sec em { font-style: normal; letter-spacing: 0; font-weight: 700; color: #5C6575; }
+			.sf-gens { flex-wrap: wrap; } .sf-gens .gc { flex: 0 0 auto; padding: 4px 9px; }
+			.sf-bolsa { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+			.sf-item { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 10px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); font-size: 10px; font-weight: 700; color: #C9CFDA; }
+			.sf-item .sf-mini { width: 18px; height: 18px; } .sf-item .sf-mini::after { width: 4px; height: 4px; margin: -4px 0 0 -4px; }
+			.sf-item i { font-style: normal; } .sf-item b { margin-left: auto; color: #fff; }
+			.sf-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+			.sf-stats div { padding: 6px 4px; border-radius: 10px; background: rgba(255,255,255,.05); text-align: center; }
+			.sf-stats span { display: block; font-size: 7.5px; font-weight: 900; letter-spacing: .1em; color: #8A93A3; }
+			.sf-stats b { font-size: 17px; color: #fff; }
+			.sf-caixa { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; align-content: start; }
+			.sf-cx { position: relative; height: 56px; border-radius: 10px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); display: flex; align-items: center; justify-content: center; }
+			.sf-cx img { width: 52px; height: 52px; image-rendering: pixelated; }
+			.sf-cx .sf-mini { position: absolute; right: 3px; bottom: 3px; width: 11px; height: 11px; border-width: 1px; } .sf-cx .sf-mini::after { display: none; }
+			.sf-cx em { position: absolute; left: 3px; top: 1px; font-style: normal; font-size: 11px; }
+			.sf-cx.sh { border-color: #F59E0B; box-shadow: 0 0 10px rgba(245,158,11,.4); }
+			.sf-pad { display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(2, 40px); gap: 4px; justify-content: center; }
+			.sf-tc { border-radius: 10px; background: #1A2030; border: 1px solid #283041; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #C9CFDA; cursor: pointer; user-select: none; }
+			.sf-tc:hover { background: #252D40; color: #fff; } .sf-tc:active { background: #FFCB05; color: #11151D; }
 			"
 			```
 		displayFolder: <HTML>\CSS

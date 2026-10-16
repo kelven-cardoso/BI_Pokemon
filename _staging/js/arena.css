@@ -235,3 +235,24 @@
 .confete { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .confete i { position: absolute; top: -20px; width: 9px; height: 14px; border-radius: 2px; animation-name: confete; animation-iteration-count: infinite; animation-timing-function: linear; }
 @keyframes confete { 0% { transform: translateY(0) rotate(0); } 100% { transform: translateY(760px) rotate(720deg); } }
+
+/* ================= MEGA / GIGANTAMAX ================= */
+.msg span b { margin: 0 .25em; }
+.bt-mega { color: #fff; border: 1px solid rgba(255,255,255,.35); animation: pulsa 1.6s ease-in-out infinite; }
+.bt-mega.mega { background: linear-gradient(90deg, #7C3AED, #EC4899, #F59E0B); }
+.bt-mega.gmax { background: linear-gradient(90deg, #991B1B, #E11D48, #FB7185); }
+.gmax-t { font-style: normal; font-size: 8.5px; font-weight: 900; letter-spacing: .06em; color: #fff; background: #E11D48; padding: 1px 6px; border-radius: 999px; margin: 0 4px; box-shadow: 0 0 10px rgba(225,29,72,.7); }
+.mon-o.gmax .spr { transform: scale(2.9); }
+.mon-j.gmax .spr { transform: scale(3.3); }
+.gmax .spr { filter: drop-shadow(0 0 16px rgba(255,40,90,.95)) drop-shadow(0 12px 10px rgba(0,0,0,.45)); }
+.gmax::before { content: ''; position: absolute; left: -70px; right: -70px; top: -90px; bottom: -20px; border-radius: 50%; background: radial-gradient(ellipse at 50% 70%, rgba(255,40,90,.55), rgba(120,0,40,.25) 45%, transparent 70%); filter: blur(6px); animation: nuvem-g 2.2s ease-in-out infinite alternate; }
+@keyframes nuvem-g { from { opacity: .6; transform: scale(.95); } to { opacity: 1; transform: scale(1.06); } }
+.mega-anim { animation: mega-anim 1.5s ease-in-out; }
+.gmax-anim { animation: gmax-anim 1.5s ease-in-out; }
+@keyframes mega-anim { 0%, 100% { filter: none; } 10%, 30%, 50%, 70%, 90% { filter: brightness(0) invert(1) drop-shadow(0 0 18px #fff); transform: scale(1.06); } 20%, 40%, 60%, 80% { filter: hue-rotate(180deg) brightness(1.6); transform: scale(.96); } }
+@keyframes gmax-anim { 0% { transform: scale(1); } 70% { transform: scale(1.5); filter: brightness(1.8) drop-shadow(0 0 30px #FF2E63); } 100% { transform: scale(1.7); filter: brightness(3); opacity: .4; } }
+.arco { margin: -100px 0 0 -100px; width: 200px; height: 200px; border-radius: 50%; background: conic-gradient(#ff3b3b, #ffb13b, #fff23b, #4bff6b, #3bd7ff, #5b5bff, #d83bff, #ff3b3b); -webkit-mask-image: radial-gradient(circle, transparent 52%, #000 54%, #000 64%, transparent 66%); animation-name: arco; animation-timing-function: ease-in-out; }
+.arco.gx { background: conic-gradient(#ff2e63, #7a0021, #ff2e63, #ff8fab, #ff2e63); }
+@keyframes arco { 0% { transform: scale(.3) rotate(0); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: scale(1.7) rotate(600deg); opacity: 0; } }
+.banner.mega { background: linear-gradient(90deg, #FF3B3B, #FFB13B, #FFF23B, #4BFF6B, #3BD7FF, #D83BFF); -webkit-background-clip: text; color: transparent; -webkit-text-stroke: 2px #11151D; filter: drop-shadow(0 0 18px rgba(255,255,255,.6)); }
+.banner.gmax { color: #FF2E63; -webkit-text-stroke: 3px #3B0014; text-shadow: 0 0 34px rgba(255,46,99,.9), 0 6px 0 #3B0014; }

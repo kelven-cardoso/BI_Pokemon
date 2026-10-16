@@ -17,7 +17,7 @@ PREFIXO = "a1b2c3d4e5f6"
 PAGINA_ARENA = PREFIXO + "aaaa0002"
 # (id da página, nome exibido, sufixo das medidas <HTML>/<CSS>)
 PAGINAS_JS = [(PAGINA_ARENA, "Arena", "Arena"), (PREFIXO + "aaaa0003", "Tipos", "Matriz Tipos"),
-              (PREFIXO + "aaaa0004", "Quiz", "Quiz")]
+              (PREFIXO + "aaaa0004", "Quiz", "Quiz"), (PREFIXO + "aaaa0005", "Safari", "Safari")]
 SCHEMA_PAGINA = "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json"
 
 LARGURA, ALTURA = 1280, 720

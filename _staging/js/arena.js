@@ -27,6 +27,37 @@
   function novoLado(ids) { return { time: ids.map(lutador), ativo: 0 }; }
   function ativo(l) { return l.time[l.ativo]; }
   function vivos(l) { return l.time.filter(function (m) { return m.hp > 0; }); }
+
+  /* ---------- Mega Evolução e Gigantamax (uma transformação por time) ---------- */
+  function formasDe(p, tipo) {
+    var chave = tipo === 'mega' ? ' Mega' : ' Gigantamax';
+    return LISTA.filter(function (x) { return x.esp === p.esp && !x.padrao && x.nome.indexOf(chave) > 0; });
+  }
+  function opcoesTransformar(l) {
+    var m = ativo(l);
+    if (l.transformou || m.hp <= 0 || m.base) { return []; }
+    return formasDe(m.p, 'mega').map(function (f) { return { tipo: 'mega', p: f }; })
+      .concat(formasDe(m.p, 'gmax').map(function (f) { return { tipo: 'gmax', p: f }; }));
+  }
+  function aplicarForma(m, op) {
+    var razao = m.hp / m.hpMax;
+    m.base = m.p; m.forma = op.tipo; m.p = op.p; m.st = statusDe(op.p.b); m.hpMax = m.st.hp; m.golpes = golpesDe(op.p);
+    if (op.tipo === 'gmax') {
+      m.hpMax *= 2; m.gmax = 3;
+      m.golpes = m.golpes.map(function (g) { return { t: g.t, c: g.c, papel: g.papel, nome: 'Max ' + nomeTipo(g.t), pw: Math.round(g.pw * 1.3), ac: 0, pr: 0 }; });
+    }
+    m.hp = Math.max(1, Math.round(razao * m.hpMax));
+  }
+  function desfazerGmax(m) {
+    var razao = m.hp / m.hpMax, p = m.base;
+    m.p = p; m.st = statusDe(p.b); m.hpMax = m.st.hp; m.golpes = golpesDe(p); m.gmax = 0; m.base = null; m.forma = null;
+    m.hp = m.hp <= 0 ? 0 : Math.max(1, Math.round(razao * m.hpMax));
+  }
+  function rotuloForma(op) {
+    if (op.tipo === 'gmax') { return '🔴 Gigantamax'; }
+    var sufixo = op.p.nome.split(' Mega')[1] || '';
+    return '💎 Mega Evoluir' + (sufixo.trim() ? ' ' + sufixo.trim() : '');
+  }
   function efTotal(tipo, alvo) { return K.efTotal(tipo, alvo.t); }
   function danoBase(a, d, g) {
     var A = g.c === 'F' ? a.st.atk : a.st.spa, Df = g.c === 'F' ? d.st.def : d.st.spd;
@@ -195,7 +226,7 @@
     return `<div class='hud hud-${lado}'>
       <div class='hud-foto' style='--c:${corTipo(m.p.t[0])}'>${K.img([K.URL.home(m.p.id), K.URL.sprite(m.p.id)])}</div>
       <div class='hud-corpo'>
-        <div class='hud-nome'><b>${esc(m.p.nome)}</b>${m.p.t.map(function (t) { return icone(t, 16); }).join('')}<span>Nv. ${NIVEL}</span>${bolas}</div>
+        <div class='hud-nome'><b>${esc(m.p.nome)}</b>${m.p.t.map(function (t) { return icone(t, 16); }).join('')}<span>Nv. ${NIVEL}</span>${m.gmax > 0 ? `<em class='gmax-t'>G-MAX ${m.gmax}</em>` : ''}${bolas}</div>
         <div class='hp'><div class='hp-fant' id='hpg-${lado}' style='width:${pct}%'></div><div class='hp-f ${hpClasse(m)}' id='hpf-${lado}' style='width:${pct}%'></div></div>
         <div class='hp-tx' id='hpt-${lado}'>${m.hp} / ${m.hpMax} HP</div>
       </div></div>`;
@@ -266,15 +297,16 @@
       <div class='campo-luz'></div><div class='diag'></div>
       <div class='vs'><span>VS</span></div>
       <div class='plat plat-o' style='--c:${corTipo(to)}'></div><div class='plat plat-j' style='--c:${corTipo(tj)}'></div>
-      <div class='mon mon-o' id='mon-o'>${K.img([K.URL.gif(foe.p.id), K.URL.home(foe.p.id)], 'spr')}</div>
-      <div class='mon mon-j' id='mon-j'>${K.img([K.URL.costas(eu.p.id), K.URL.gif(eu.p.id), K.URL.home(eu.p.id)], 'spr')}</div>
+      <div class='mon mon-o${foe.gmax > 0 ? ' gmax' : ''}' id='mon-o'>${K.img([K.URL.gif(foe.p.id), K.URL.home(foe.p.id)], 'spr')}</div>
+      <div class='mon mon-j${eu.gmax > 0 ? ' gmax' : ''}' id='mon-j'>${K.img([K.URL.costas(eu.p.id), K.URL.gif(eu.p.id), K.URL.home(eu.p.id)], 'spr')}</div>
       ${barraTopo('j')}${barraTopo('o')}
       ${cartaLado('j')}${cartaLado('o')}
-      <div class='msg' id='ar-msg'>${S.msg || 'O que ' + esc(eu.p.nome) + ' vai fazer?'}</div>
+      <div class='msg' id='ar-msg'><span>${S.msg || 'O que <b>' + esc(eu.p.nome) + '</b> vai fazer?'}</span></div>
       <div id='ar-fx' class='efx'></div>
       <div class='painel'>
         <div class='gps' id='ar-golpes'>${golpesHtml()}</div>
         <div class='acoes'>
+          ${opcoesTransformar(B.j).map(function (op, i) { return `<div class='bt bt-mega ${op.tipo}${S.ocupado || S.auto || S.fim || S.escolha ? ' off' : ''}' data-acao='transformar' data-i='${i}'>${rotuloForma(op)}</div>`; }).join('')}
           <div class='bt bt-sec${S.auto ? ' on' : ''}' data-acao='auto'>${S.auto ? '⏸ Automático' : '▶ Automático'}</div>
           <div class='bt bt-gold' data-acao='simular'>🎲 Simular ×1000</div>
           <div class='bt bt-sec' data-acao='novo'>Sair</div>
@@ -295,7 +327,7 @@
     if (busca) { busca.addEventListener('input', function () { S.busca = busca.value; $('ar-grade').innerHTML = gradeHtml(); }); }
   }
   function registrar(txt) { S.log.push(txt); var log = $('ar-log'); if (log) { log.innerHTML = logHtml(); log.scrollTop = log.scrollHeight; } }
-  function mensagem(txt) { S.msg = txt; var m = $('ar-msg'); if (m) { m.innerHTML = txt; m.classList.remove('nova'); void m.offsetWidth; m.classList.add('nova'); } }
+  function mensagem(txt) { S.msg = txt; var m = $('ar-msg'); if (m) { m.innerHTML = '<span>' + txt + '</span>'; m.classList.remove('nova'); void m.offsetWidth; m.classList.add('nova'); } }
 
   /* ================= EFEITOS POR TIPO ================= */
   var FX = {
@@ -423,8 +455,35 @@
     }
     return false;
   }
+  async function transformar(lado, op) {
+    var l = S.B[lado], m = ativo(l), antes = esc(m.p.nome), c = centro(lado);
+    l.transformou = true;
+    mensagem(op.tipo === 'mega' ? `<b>${antes}</b> está reagindo à Pedra Chave... está Mega Evoluindo!` : `<b>${antes}</b> está ficando gigante!`);
+    var mon = $('mon-' + lado); if (mon) { mon.classList.add(op.tipo === 'mega' ? 'mega-anim' : 'gmax-anim'); }
+    particula(op.tipo === 'mega' ? 'arco' : 'arco gx', c.x, c.y, '#fff', 0, 0, 1500);
+    await esperar(1500);
+    particula('flash', 640, 360, op.tipo === 'mega' ? '#FFFFFF' : '#FF2E63', 0, 0, 420);
+    aplicarForma(m, op);
+    var depois = esc(m.p.nome);
+    registrar(op.tipo === 'mega' ? `<i class='crit'>${antes} Mega Evoluiu em ${depois}!</i>` : `<i class='crit'>${antes} usou o Gigantamax! (3 turnos)</i>`);
+    S.msg = op.tipo === 'mega' ? `<b>${antes}</b> Mega Evoluiu em <b>${depois}</b>!` : `<b>${antes}</b> ficou gigante!`;
+    render();
+    bannerFx(op.tipo === 'mega' ? 'MEGA EVOLUÇÃO!' : 'GIGANTAMAX!', op.tipo === 'mega' ? 'mega' : 'gmax');
+    var mon2 = $('mon-' + lado); if (mon2) { mon2.classList.add('entra'); }
+    await esperar(1100);
+  }
+  async function reverterGmax(lado) {
+    var m = ativo(S.B[lado]), nome = esc(m.base.nome);
+    var mon = $('mon-' + lado); if (mon) { mon.classList.add('sai'); }
+    await esperar(400);
+    desfazerGmax(m);
+    S.msg = `<b>${nome}</b> voltou ao tamanho normal.`; registrar(S.msg); render();
+    var mon2 = $('mon-' + lado); if (mon2) { mon2.classList.add('entra'); }
+    await esperar(700);
+  }
   async function entrar(lado, idx) {
-    var B = S.B;
+    var B = S.B, velho = ativo(B[lado]);
+    if (velho.gmax > 0) { desfazerGmax(velho); }
     B[lado].ativo = idx;
     var nome = esc(ativo(B[lado]).p.nome);
     S.msg = lado === 'j' ? `Vai, <b>${nome}</b>!` : `O oponente enviou <b>${nome}</b>!`;
@@ -448,7 +507,10 @@
   async function executarTurno(acaoJ) {
     if (S.ocupado || !S.B || S.fim) { return; }
     S.ocupado = true; S.escolha = null; render();
-    var B = S.B, acoes = ordem(B, acaoJ, iaAcao(B.o, B.j));
+    var B = S.B;
+    if (S.auto && opcoesTransformar(B.j).length) { await transformar('j', opcoesTransformar(B.j)[0]); }
+    if (opcoesTransformar(B.o).length) { await transformar('o', opcoesTransformar(B.o)[0]); }
+    var acoes = ordem(B, acaoJ, iaAcao(B.o, B.j));
     for (var k = 0; k < acoes.length; k++) {
       var lado = acoes[k].lado, ac = acoes[k].a;
       if (ac.tipo === 'troca') {
@@ -460,6 +522,10 @@
       if (ativo(B[lado]).hp <= 0) { continue; }
       var ko = await usarGolpe(lado, ac.idx);
       if (ko) { if (await aposDesmaio(lado === 'j' ? 'o' : 'j')) { return; } break; }
+    }
+    for (var lg of ['j', 'o']) {
+      var mg = ativo(B[lg]);
+      if (mg.gmax > 0 && mg.hp > 0) { mg.gmax--; if (mg.gmax === 0) { await reverterGmax(lg); } }
     }
     S.ocupado = false; S.msg = 'O que <b>' + esc(ativo(B.j).p.nome) + '</b> vai fazer?'; render();
     if (S.auto) { proximoAuto(); }
@@ -519,6 +585,13 @@
         if (S.escolha === 'forcada') { S.escolha = null; S.ocupado = true; entrar('j', i).then(function () { S.ocupado = false; S.msg = 'O que <b>' + esc(ativo(S.B.j).p.nome) + '</b> vai fazer?'; render(); }); }
         else { executarTurno({ tipo: 'troca', idx: i }); }
         break;
+      case 'transformar':
+        var op = opcoesTransformar(S.B.j)[+el.getAttribute('data-i')];
+        if (op && !S.ocupado) {
+          S.ocupado = true;
+          transformar('j', op).then(function () { S.ocupado = false; S.msg = 'O que <b>' + esc(ativo(S.B.j).p.nome) + '</b> vai fazer?'; render(); });
+        }
+        break;
       case 'auto': S.auto = !S.auto; render(); if (S.auto) { proximoAuto(); } break;
       case 'simular':
         S.sim = rodarSimulacoes(1000);
@@ -531,7 +604,7 @@
   };
   if (!window.__arenaResize) { window.__arenaResize = true; window.addEventListener('resize', function () { K.escala(raiz); }); }
 
-  window.__arenaApi = { simular: simular, golpesDe: golpesDe, statusDe: statusDe };
+  window.__arenaApi = { simular: simular, golpesDe: golpesDe, statusDe: statusDe, opcoesTransformar: opcoesTransformar, aplicarForma: aplicarForma, desfazerGmax: desfazerGmax, novoLado: novoLado };
   render();
   if (S.auto && S.tela === 'batalha' && !S.ocupado) { proximoAuto(); }
 })();

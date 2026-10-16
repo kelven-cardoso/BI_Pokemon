@@ -20,7 +20,10 @@ const pk = resp.p.map(p => {
   const st = Object.fromEntries(p.pokemon_v2_pokemonstats.map(s => [s.stat_id, s.base_stat]));
   const ts = p.pokemon_v2_pokemontypes.sort((a, b) => a.slot - b.slot).map(t => slug[t.type_id]);
   const s = esp[p.pokemon_species_id];
-  return [p.id, (s.n.length ? s.n[0].name : s.name) + (p.is_default ? '' : ' (' + p.name + ')'), p.pokemon_species_id,
+  const base = s.n.length ? s.n[0].name : s.name;
+  const suf = p.is_default ? '' : (p.name.startsWith(s.name + '-') ? p.name.slice(s.name.length + 1) : p.name);
+  const forma = suf.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ').replace('Gmax', 'Gigantamax');
+  return [p.id, forma ? base + ' ' + forma : base, p.pokemon_species_id,
     ts[0], ts[1] || '', st[1], st[2], st[3], st[4], st[5], st[6], p.is_default ? 1 : 0, s.generation_id];
 });
 
@@ -71,3 +74,39 @@ clicar('comecar'); clicar('dica'); clicar('dica'); clicar('dica');
 console.log('quiz   pergunta:', window.__quiz.fase, '| opções:', window.__quiz.opcoes.length, '| dica de letras:', raiz.innerHTML.includes('qz-letras'));
 clicar('resp', { 'data-id': String(window.__quiz.atual) });
 console.log('quiz   resposta:', window.__quiz.fase, '| pontos:', window.__quiz.pontos, '| acertou:', raiz.innerHTML.includes('ACERTOU'));
+
+/* ---------- Mega / Gigantamax ---------- */
+{
+  const A = window.__arenaApi;
+  const l = A.novoLado([6]), m = l.time[0];
+  console.log('opções Charizard:', A.opcoesTransformar(l).map(o => o.tipo + ':' + o.p.nome).join(', '));
+  A.aplicarForma(m, A.opcoesTransformar(l).find(o => o.tipo === 'gmax'));
+  console.log('gmax:', m.p.nome, m.hp + '/' + m.hpMax, m.golpes.map(g => g.nome + ' ' + g.pw).join(', '));
+  A.desfazerGmax(m);
+  console.log('voltou:', m.p.nome, m.hp + '/' + m.hpMax);
+  const l2 = A.novoLado([6]); A.aplicarForma(l2.time[0], A.opcoesTransformar(l2)[0]);
+  console.log('mega:', l2.time[0].p.nome, l2.time[0].p.t.join('/'), l2.time[0].golpes.map(g => g.nome).join(', '));
+}
+
+/* ---------- Tipos: abas roda / ranking ---------- */
+for (const aba of ['roda', 'ranking']) {
+  raiz = Object.assign(elemento(), { clientWidth: 1280, clientHeight: 720, querySelector: () => null });
+  window.__tipos.aba = aba;
+  eval(ler('tipos.js'));
+  const nomes = [...raiz.innerHTML.matchAll(/class='rk-nome'>([^<]+)</g)].map(m => m[1]);
+  console.log('tipos ', aba.padEnd(7), raiz.innerHTML.length, 'caracteres', nomes.length ? '| top: ' + nomes.slice(0, 5).join(', ') + ' | piores: ' + nomes.slice(-4).join(', ') : '| setas: ' + (raiz.innerHTML.match(/class='seta /g) || []).length);
+}
+
+/* ---------- Safari ---------- */
+{
+  raiz = Object.assign(elemento(), { clientWidth: 1280, clientHeight: 720 });
+  eval(ler('safari.js'));
+  const A = window.__safariApi, P2 = window.PK.P;
+  console.log('safari renderizou', raiz.innerHTML.length, 'caracteres | início:', window.__safari.x + ',' + window.__safari.y, A.tile(window.__safari.x, window.__safari.y));
+  for (const id of [10, 25, 6, 150, 143]) {
+    const L = { id, fruta: false };
+    console.log('  captura', P2[id].nome.padEnd(10), 'taxa', String(A.taxaCaptura(P2[id])).padStart(3), '| Poké', Math.round(100 * A.chanceCaptura(L, 'poke')) + '%', '| Ultra', Math.round(100 * A.chanceCaptura(L, 'ultra')) + '%');
+  }
+  const cont = {}; for (let i = 0; i < 2000; i++) { const p = A.sortearPokemon(); cont[p.total >= 580 ? 'lendário/forte' : p.total > 500 ? 'evoluído' : 'comum'] = (cont[p.total >= 580 ? 'lendário/forte' : p.total > 500 ? 'evoluído' : 'comum'] || 0) + 1; }
+  console.log('  sorteio de 2000 encontros:', JSON.stringify(cont));
+}

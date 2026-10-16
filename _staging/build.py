@@ -146,7 +146,7 @@ def ler_medidas():
 JS_DIR = STAGING / "js"
 
 # páginas em JavaScript: nome da medida -> arquivos (o comum.* entra antes de todos)
-PAGINAS_JS = {"Arena": "arena", "Matriz Tipos": "tipos", "Quiz": "quiz"}
+PAGINAS_JS = {"Arena": "arena", "Matriz Tipos": "tipos", "Quiz": "quiz", "Safari": "safari"}
 
 
 def literal_dax(texto: str, tamanho: int = 4000) -> str:
