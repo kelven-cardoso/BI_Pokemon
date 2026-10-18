@@ -29,7 +29,7 @@ const pk = resp.p.map(p => {
 
 function elemento() {
   return { style: { setProperty() {} }, classList: { add() {}, remove() {}, contains: () => false }, innerHTML: '',
-    addEventListener() {}, querySelectorAll: () => [], querySelector: () => null, focus() {}, appendChild() {} };
+    addEventListener() {}, querySelectorAll: () => [], querySelector: () => null, focus() {}, appendChild() {}, remove() {}, insertAdjacentHTML() {} };
 }
 let raiz;
 global.window = { addEventListener() {}, ARENA_DADOS: { v: pk.length, pk, ef, gp, tp }, localStorage: { getItem: () => null, setItem() {} } };
@@ -128,4 +128,15 @@ for (const aba of ['roda', 'ranking']) {
   let sh = 0, ld = 0;
   for (let i = 0; i < 100; i++) { A.encontro(); if (S3.luta.shiny) sh++; if (P3[S3.luta.id].lend) ld++; S3.luta = null; }
   console.log('  limites em 100 encontros seguidos -> shiny:', sh, '(máx 2) | lendário:', ld, '(máx 1)');
+}
+
+/* ---------- Safari: Pokédex da caixa ---------- */
+{
+  const A = window.__safariApi, S4 = window.__safari;
+  Object.assign(S4, { luta: null, caixa: [{ id: 150, shiny: true, nivel: 50, bola: 'ultra' }, { id: 25, shiny: false, nivel: 12, bola: 'poke' }], ver: 0 });
+  const h = A.dexHtml();
+  console.log('dex: html', h.length, '| shiny art:', h.includes('official-artwork/shiny/150'), '| selo lendário:', h.includes('LENDÁRIO'), '| fala:', (h.match(/<i style='animation-delay/g) || []).length, 'letras');
+  A.acaoDex('prox'); console.log('dex: próximo ->', S4.ver, window.PK.P[S4.caixa[S4.ver].id].nome);
+  A.acaoDex('prox'); console.log('dex: volta ao início ->', S4.ver);
+  A.acaoDex('fechar'); console.log('dex: fechado ->', S4.ver);
 }

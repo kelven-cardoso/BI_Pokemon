@@ -191,7 +191,7 @@
   }
   function laco(t) {
     quadro(t || 0);
-    if (S.tecla && !S.anda && !S.luta) { mover(S.tecla); }
+    if (S.tecla && !S.anda && !S.luta && S.ver == null) { mover(S.tecla); }
     if (window.requestAnimationFrame) { window.__safariLaco = window.requestAnimationFrame(laco); }
   }
 
@@ -333,9 +333,9 @@
     var bolsa = ['poke', 'grande', 'ultra'].map(function (b) {
       return `<div class='sf-item'><i class='sf-mini' style='--c:${BOLAS[b].cor}'></i><span>${BOLAS[b].nome}</span><b>×${S.bolsa[b]}</b></div>`;
     }).join('') + `<div class='sf-item'><i>🍓</i><span>Fruta Frambo</span><b>×${S.bolsa.fruta}</b></div>`;
-    var caixa = S.caixa.map(function (c) {
+    var caixa = S.caixa.map(function (c, i) {
       var p = K.P[c.id], src = c.shiny ? K.URL.sprite(c.id).replace('/pokemon/', '/pokemon/shiny/') : K.URL.sprite(c.id);
-      return `<div class='sf-cx${c.shiny ? ' sh' : ''}${p.lend ? ' ld' : ''}' title='${esc(p.nome)} · Nv. ${c.nivel}'><img src='${src}'/><i class='sf-mini' style='--c:${BOLAS[c.bola].cor}'></i>${c.shiny ? '<em>✨</em>' : ''}<span>${esc(p.nome)}</span></div>`;
+      return `<div class='sf-cx${c.shiny ? ' sh' : ''}${p.lend ? ' ld' : ''}' data-acao='ver' data-i='${i}' title='Ver ${esc(p.nome)} na Pokédex'><img src='${src}'/><i class='sf-mini' style='--c:${BOLAS[c.bola].cor}'></i>${c.shiny ? '<em>✨</em>' : ''}<span>${esc(p.nome)}</span></div>`;
     }).join('');
     var gens = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(function (g) { return `<span class='gc${S.gen === g ? ' on' : ''}' data-acao='gen' data-g='${g}'>${g || 'Todas'}</span>`; }).join('');
     var vistos = Object.keys(S.vistos).length;
@@ -346,6 +346,57 @@
       <div class='sf-sec'>SUA CAIXA <em>${S.caixa.length} Pokémon</em></div><div class='sf-caixa'>${caixa || `<span class='vazio'>Capture Pokémon no mato alto!</span>`}</div>
       <div class='sf-pad'><div></div><div class='sf-tc' data-tecla='cima'>▲</div><div></div><div class='sf-tc' data-tecla='esq'>◀</div><div class='sf-tc' data-tecla='baixo'>▼</div><div class='sf-tc' data-tecla='dir'>▶</div></div>`;
   }
+  /* ================= POKÉDEX (estilo anime) ================= */
+  function dexHtml(semAbrir) {
+    var c = S.ver == null ? null : S.caixa[S.ver];
+    if (!c) { return ''; }
+    var p = K.P[c.id], cor = K.corTipo(p.t[0]);
+    var arte = c.shiny ? [urlShiny(K.URL.arte(p.id)), K.URL.arte(p.id), K.URL.home(p.id)] : [K.URL.arte(p.id), K.URL.home(p.id)];
+    var num = '#' + String(p.esp).padStart(3, '0');
+    var tipos = p.t.map(K.nomeTipo).join(' e ');
+    var fala = p.nome + ', o Pokémon do tipo ' + tipos + '. ' + (p.lend ? 'Um Pokémon lendário! ' : '') + (c.shiny ? 'Coloração rara: shiny! ' : '')
+      + 'Capturado no Nv. ' + c.nivel + ' com ' + BOLAS[c.bola].nome + '.';
+    var letras = fala.split('').map(function (ch, i) { return `<i style='animation-delay:${(semAbrir ? 0 : 900) + i * 22}ms'>${esc(ch)}</i>`; }).join('');
+    var stats = [['HP', p.b.hp], ['ATQ', p.b.atk], ['DEF', p.b.def], ['A.ESP', p.b.spa], ['D.ESP', p.b.spd], ['VEL', p.b.spe]].map(function (s, i) {
+      return `<div class='dx-st'><span>${s[0]}</span><div><i style='width:${Math.min(100, 100 * s[1] / 180)}%;animation-delay:${(semAbrir ? 0 : 900) + i * 90}ms'></i></div><b>${s[1]}</b></div>`;
+    }).join('');
+    var brilho = c.shiny ? `<div class='dx-brilho'><i></i><i></i><i></i><i></i></div>` : '';
+    var selos = p.t.map(K.chip).join('') + `<span class='dx-selo'>GEN ${p.gen}</span>` + (c.shiny ? `<span class='dx-selo sh'>✨ SHINY</span>` : '') + (p.lend ? `<span class='dx-selo ld'>LENDÁRIO</span>` : '');
+    var teclas = ''; for (var k = 0; k < 10; k++) { teclas += '<i></i>'; }
+    return `<div class='dx-fundo${semAbrir ? ' aberto' : ''}' id='sf-dex' data-acao='fecharDex'>
+      <div class='dx' style='--c:${cor}' data-acao='nada'>
+        <div class='dx-esq'>
+          <div class='dx-topo'><div class='dx-lente'></div><i class='dx-luz r'></i><i class='dx-luz y'></i><i class='dx-luz g'></i></div>
+          <div class='dx-borda'><i class='dx-pt a'></i><i class='dx-pt b'></i>
+            <div class='dx-tela'><span class='dx-num'>Nº ${num.slice(1)}</span>${K.img(arte, 'dx-arte')}${brilho}<div class='dx-scan'></div></div>
+            <i class='dx-pt c'></i><span class='dx-som'><i></i><i></i><i></i></span></div>
+          <div class='dx-ctrl'><i class='dx-bt'></i><div class='dx-pilulas'><i class='r'></i><i class='b'></i></div>
+            <div class='dx-nome'>${esc(p.nome.toUpperCase())}</div>
+            <div class='dx-cruz'><span class='v'></span><span class='h'></span><b class='e' data-acao='dexAnt' title='Anterior'>◀</b><b class='d' data-acao='dexProx' title='Próximo'>▶</b></div></div>
+        </div>
+        <div class='dx-dobra'><i></i><i></i></div>
+        <div class='dx-dir'>
+          <div class='dx-fechar' data-acao='fecharDex' title='Fechar (Esc)'>×</div>
+          <div class='dx-lcd'><div class='dx-lcd-tit'><b>${esc(p.nome)}</b><span>${num}</span></div><div class='dx-fala'>${letras}</div></div>
+          <div class='dx-selos'>${selos}</div>
+          <div class='dx-lcd dx-stats'>${stats}<div class='dx-total'>TOTAL <b>${p.total}</b></div></div>
+          <div class='dx-base'><div class='dx-teclas'>${teclas}</div>
+            <div class='dx-info'><i class='sf-mini' style='--c:${BOLAS[c.bola].cor}'></i>${BOLAS[c.bola].nome} · Nv. ${c.nivel}<em>${S.ver + 1}/${S.caixa.length}</em></div></div>
+        </div>
+      </div></div>`;
+  }
+  function mostrarDex(semAbrir) {
+    var velho = $('sf-dex'); if (velho) { velho.remove(); }
+    var jogo = $('sf-jogo');
+    if (jogo && S.ver != null && jogo.insertAdjacentHTML) { jogo.insertAdjacentHTML('beforeend', dexHtml(semAbrir)); }
+  }
+  function acaoDex(acao) {
+    if (S.ver == null) { return false; }
+    if (acao === 'fechar') { S.ver = null; mostrarDex(); return true; }
+    var n = S.caixa.length; if (!n) { return false; }
+    S.ver = (S.ver + (acao === 'prox' ? 1 : n - 1)) % n; mostrarDex(true); return true;
+  }
+  window.__safariDex = acaoDex;
   function atualizarLado() { var l = $('sf-lado'); if (l) { l.innerHTML = ladoHtml(); } }
   function desenharTreinadorCostas() {
     var cv = $('sf-tr'); if (!cv || !cv.getContext) { return; }
@@ -357,7 +408,7 @@
       <div class='topo'><span class='sf-dica'>⌨ setas / WASD · ou o direcional ao lado</span><div class='titulo'><b>SAFARI</b><span>ande pelo mato e capture</span></div></div>
       <div class='sf-jogo' id='sf-jogo' tabindex='0'><canvas id='sf-canvas' width='${COLS * TL}' height='${LINS * TL}'></canvas>
         <div class='sf-nuvens'><i></i><i></i></div><div class='sf-vinheta'></div>
-        <div class='sf-msg' id='sf-msg'>${S.msg}</div>${lutaHtml()}</div>
+        <div class='sf-msg' id='sf-msg'>${S.msg}</div>${lutaHtml()}${dexHtml(true)}</div>
       <div class='sf-lado vidro' id='sf-lado'>${ladoHtml()}</div></div>`;
     K.escala(raiz);
     quadro(agora());
@@ -366,10 +417,15 @@
 
   /* ================= ENTRADA ================= */
   var TECLAS = { ArrowUp: 'cima', ArrowDown: 'baixo', ArrowLeft: 'esq', ArrowRight: 'dir', w: 'cima', s: 'baixo', a: 'esq', d: 'dir', W: 'cima', S: 'baixo', A: 'esq', D: 'dir' };
-  if (!window.__safariTeclas) {
-    window.__safariTeclas = true;
+  if (!window.__safariTeclas2) {
+    window.__safariTeclas2 = true;
     window.addEventListener('keydown', function (ev) {
       var s = window.__safari; if (!s) { return; }
+      if (s.ver != null && window.__safariDex) {
+        var a = ev.key === 'Escape' ? 'fechar' : ev.key === 'ArrowLeft' ? 'ant' : ev.key === 'ArrowRight' ? 'prox' : null;
+        if (a) { window.__safariDex(a); ev.preventDefault(); }
+        s.tecla = null; return;
+      }
       var d = TECLAS[ev.key]; if (d) { s.tecla = d; ev.preventDefault(); }
     });
     window.addEventListener('keyup', function (ev) { var s = window.__safari; if (s && TECLAS[ev.key] === s.tecla) { s.tecla = null; } });
@@ -388,10 +444,16 @@
       case 'fruta': usarFruta(); break;
       case 'fugir': fugir(); break;
       case 'gen': S.gen = +el.getAttribute('data-g'); atualizarLado(); break;
+      case 'ver':
+        if (S.luta && S.luta.fase === 'animando') { break; }
+        S.ver = +el.getAttribute('data-i'); S.tecla = null; mostrarDex(); break;
+      case 'fecharDex': acaoDex('fechar'); break;
+      case 'dexAnt': acaoDex('ant'); break;
+      case 'dexProx': acaoDex('prox'); break;
     }
   };
 
-  window.__safariApi = { chanceCaptura: chanceCaptura, taxaCaptura: taxaCaptura, sortearPokemon: sortearPokemon, mover: mover, tile: tile, encontro: encontro };
+  window.__safariApi = { chanceCaptura: chanceCaptura, taxaCaptura: taxaCaptura, sortearPokemon: sortearPokemon, mover: mover, tile: tile, encontro: encontro, dexHtml: dexHtml, acaoDex: acaoDex };
   if (window.__safariLaco && window.cancelAnimationFrame) { window.cancelAnimationFrame(window.__safariLaco); }
   if (S.luta && S.luta.fase !== 'menu') { S.luta.fase = 'menu'; S.luta.texto = 'O que você vai fazer?'; }
   render();
