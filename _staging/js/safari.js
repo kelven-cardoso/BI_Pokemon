@@ -7,6 +7,9 @@
   if (!K || !raiz) { return; }
   var esc = K.esc, TL = 32, COLS = 30, LINS = 20;
   var SHINY = 8, MAX_SHINY = 2, LENDARIO = 0.05, MAX_LENDARIO = 1;
+  /* depois de 2 capturas as chances sobem (para a pessoa encontrar), mantendo os limites */
+  var TURBO_APOS = 2, LENDARIO_TURBO = 0.7, SHINY_TURBO = 0.8, SHINY_LENDARIO_TURBO = 0.5;
+  function turbo() { return S.caixa.length >= TURBO_APOS; }
 
   /* ================= MAPA ================= */
   /* t árvore · . grama · m mato alto · c caminho · a água · r pedra · f flores · H centro · D porta · p placa · x cerca */
@@ -219,7 +222,7 @@
   function sortearPokemon() {
     var base = K.LISTA.filter(function (p) { return p.padrao && (!S.gen || p.gen === S.gen); });
     var lendas = base.filter(function (p) { return p.lend; }), comuns = base.filter(function (p) { return !p.lend; });
-    if (lendas.length && S.lendarios < MAX_LENDARIO && Math.random() < LENDARIO) { return K.aleatorio(lendas); }
+    if (lendas.length && S.lendarios < MAX_LENDARIO && Math.random() < (turbo() ? LENDARIO_TURBO : LENDARIO)) { return K.aleatorio(lendas); }
     if (!comuns.length) { return K.aleatorio(base); }
     var pesos = comuns.map(function (p) { return p.total > 500 ? 0.35 : p.total > 400 ? 0.7 : 1; });
     var soma = pesos.reduce(function (a, b) { return a + b; }, 0), r = Math.random() * soma;
@@ -239,7 +242,8 @@
     return n;
   }
   function encontro() {
-    var p = sortearPokemon(), shiny = S.shinies < MAX_SHINY && Math.random() < 1 / SHINY;
+    var p = sortearPokemon(), chanceShiny = turbo() ? (p.lend ? SHINY_LENDARIO_TURBO : SHINY_TURBO) : 1 / SHINY;
+    var shiny = S.shinies < MAX_SHINY && Math.random() < chanceShiny;
     S.enc++; S.tecla = null; S.vistos[p.id] = 1;
     if (shiny) { S.shinies++; }
     if (p.lend) { S.lendarios++; }

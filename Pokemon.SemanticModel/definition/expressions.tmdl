@@ -30,6 +30,5 @@ expression PokeRaw =
 		    Dados = Resposta[data]
 		in
 		    Dados
-
 	annotation PBI_ResultType = Record
 

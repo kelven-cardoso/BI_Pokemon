@@ -112,3 +112,20 @@ for (const aba of ['roda', 'ranking']) {
   console.log('  300 encontros -> shiny:', cont.shiny, '(máx 2) | lendários:', cont.lendario, '(máx 1) | contadores:', S2.shinies, S2.lendarios);
   console.log('  lendário: taxa', A.taxaCaptura(P2[150]), '| Poké', Math.round(100 * A.chanceCaptura({ id: 150 }, 'poke')) + '% | Ultra', Math.round(100 * A.chanceCaptura({ id: 150 }, 'ultra')) + '%');
 }
+
+/* ---------- Safari: chances depois de 2 capturas ---------- */
+{
+  const A = window.__safariApi, S3 = window.__safari, P3 = window.PK.P, N = 2000;
+  let lend = 0, shyComum = 0, comuns = 0, shyLend = 0;
+  for (let i = 0; i < N; i++) {
+    Object.assign(S3, { caixa: [{ id: 1, shiny: false, nivel: 5, bola: 'poke' }, { id: 4, shiny: false, nivel: 5, bola: 'poke' }], shinies: 0, lendarios: 0, luta: null });
+    A.encontro();
+    const L = S3.luta, eLend = P3[L.id].lend;
+    if (eLend) { lend++; if (L.shiny) shyLend++; } else { comuns++; if (L.shiny) shyComum++; }
+  }
+  console.log(`  turbo (1º encontro após 2 capturas): lendário ${(100 * lend / N).toFixed(0)}% | shiny comum ${(100 * shyComum / comuns).toFixed(0)}% | shiny lendário ${(100 * shyLend / lend).toFixed(0)}%`);
+  Object.assign(S3, { caixa: [{ id: 1, shiny: false, nivel: 5, bola: 'poke' }, { id: 4, shiny: false, nivel: 5, bola: 'poke' }], shinies: 0, lendarios: 0, luta: null });
+  let sh = 0, ld = 0;
+  for (let i = 0; i < 100; i++) { A.encontro(); if (S3.luta.shiny) sh++; if (P3[S3.luta.id].lend) ld++; S3.luta = null; }
+  console.log('  limites em 100 encontros seguidos -> shiny:', sh, '(máx 2) | lendário:', ld, '(máx 1)');
+}

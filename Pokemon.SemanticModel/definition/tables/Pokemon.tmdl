@@ -181,9 +181,9 @@ table Pokemon
 
 	column Nome
 		dataType: string
+		sortByColumn: OrdemDex
 		summarizeBy: none
 		sourceColumn: Nome
-		sortByColumn: OrdemDex
 
 	column Numero
 		dataType: string
@@ -203,9 +203,9 @@ table Pokemon
 
 	column GeracaoLabel
 		dataType: string
+		sortByColumn: Geracao
 		summarizeBy: none
 		sourceColumn: GeracaoLabel
-		sortByColumn: Geracao
 
 	column Raridade
 		dataType: string
@@ -285,7 +285,7 @@ table Pokemon
 				    LimparTexto = (t as nullable text) as nullable text =>
 				        if t = null then null
 				        else Text.Combine(List.Select(Text.SplitAny(t, "#(lf)#(cr)#(000C)"), each _ <> ""), " "),
-				
+
 				    // ---------- espécies ----------
 				    Especies = List.Transform(PokeRaw[s], (r) => [
 				        SpeciesId = r[id],
@@ -313,7 +313,7 @@ table Pokemon
 				    MaxCadeia = Table.Group(EspEstagio, {"ChainId"}, {{"EstagiosCadeia", each List.Max([Estagio]), Int64.Type}}),
 				    EspJuntado = Table.NestedJoin(EspEstagio, {"ChainId"}, MaxCadeia, {"ChainId"}, "mx", JoinKind.LeftOuter),
 				    EspFinal = Table.ExpandTableColumn(EspJuntado, "mx", {"EstagiosCadeia"}),
-				
+
 				    // ---------- pokémon (inclui formas) ----------
 				    Pokes = List.Transform(PokeRaw[p], (r) =>
 				        let
@@ -352,7 +352,7 @@ table Pokemon
 				        {"SlugEspecie", "NomeEspecie", "Categoria", "Descricao", "Geracao", "ChainId", "EvoluiDe", "NivelEvolucao",
 				         "Lendario", "Mitico", "Estagio", "EstagiosCadeia"}
 				    ),
-				
+
 				    // ---------- colunas derivadas ----------
 				    // rótulo da forma a partir do sufixo do slug (charizard-mega-x -> "Mega X")
 				    Forma = Table.AddColumn(Expandido, "Forma", each
@@ -414,7 +414,7 @@ table Pokemon
 				            else "Base",
 				        type text),
 				    OrdemDex = Table.AddColumn(TagCarta, "OrdemDex", each [SpeciesId] * 100000 + [PokemonId], Int64.Type),
-				
+
 				    Tipado = Table.TransformColumnTypes(OrdemDex, {
 				        {"PokemonId", Int64.Type}, {"Slug", type text}, {"SpeciesId", Int64.Type}, {"IsDefault", type logical},
 				        {"FormaSlug", type text}, {"IsMega", type logical}, {"AlturaM", type number}, {"PesoKg", type number},

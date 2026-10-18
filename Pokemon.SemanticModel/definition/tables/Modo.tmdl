@@ -2,9 +2,9 @@ table Modo
 
 	column Modo
 		dataType: string
+		sortByColumn: Ordem
 		summarizeBy: none
 		sourceColumn: Modo
-		sortByColumn: Ordem
 
 	column Ordem
 		dataType: int64
