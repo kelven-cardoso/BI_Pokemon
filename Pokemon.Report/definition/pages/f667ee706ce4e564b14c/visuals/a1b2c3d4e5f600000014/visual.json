@@ -75,7 +75,7 @@
                           [
                             {
                               "Literal": {
-                                "Value": "'✨ Shiny'"
+                                "Value": "'Normal'"
                               }
                             }
                           ]
@@ -532,5 +532,23 @@
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "b0245f46c02829547433",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Modo"
+              }
+            },
+            "Property": "Modo"
+          }
+        },
+        "type": "Categorical"
+      }
+    ]
   }
 }

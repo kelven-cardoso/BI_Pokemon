@@ -13,9 +13,9 @@ table Tipos
 
 	column Tipo
 		dataType: string
-		sortByColumn: Ordem
 		summarizeBy: none
 		sourceColumn: Tipo
+		sortByColumn: Ordem
 
 	column Cor
 		dataType: string

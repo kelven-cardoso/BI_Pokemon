@@ -1,12 +1,12 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "a1b2c3d4e5f600000006",
   "position": {
     "x": 364,
     "y": 14,
     "z": 5000,
-    "width": 472,
     "height": 462,
+    "width": 472,
     "tabOrder": 5000
   },
   "visual": {
@@ -201,5 +201,23 @@
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "4eda067b53dfdda4248a",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Medidas"
+              }
+            },
+            "Property": "<HTML> Hero"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }
